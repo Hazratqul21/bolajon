@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  age           Int
+  email         String?   @unique
+  avatar        String?
+  totalStars    Int       @default(0)
+  totalScore    Int       @default(0)
+  currentLevel  Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  progress      Progress[]
+  achievements  Achievement[]
+  sessions      LearningSession[]
+  
+  @@map("users")
+}
+
+model Progress {
+  id              String   @id @default(cuid())
+  userId          String
+  letter          String
+  letterIndex     Int
+  wordsCompleted  Int      @default(0)
+  totalWords      Int      @default(3)
+  accuracy        Float    @default(0)
+  attemptsCount   Int      @default(0)
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, letterIndex])
+  @@map("progress")
+}
+
+model LearningSession {
+  id              String   @id @default(cuid())
+  userId          String
+  letter          String
+  word            String
+  userSpeech      String
+  isCorrect       Boolean
+  aiFeedback      String
+  score           Int
+  duration        Int      // seconds
+  createdAt       DateTime @default(now())
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("learning_sessions")
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // "first_letter", "10_stars", "perfect_score", etc.
+  title       String
+  description String
+  icon        String
+  earnedAt    DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("achievements")
+}
+
+model Leaderboard {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  score     Int
+  stars     Int
+  rank      Int
+  updatedAt DateTime @updatedAt
+  
+  @@map("leaderboard")
+}
