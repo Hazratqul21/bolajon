@@ -62,20 +62,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Create learning session
-    const userSpeech = body.userSpeech || word;
-    const aiFeedback = body.aiFeedback || '';
-    const duration = body.duration || 0;
-    
     await prisma.learningSession.create({
       data: {
         userId,
         letter,
         word,
-        userSpeech,
+        userSpeech: userSpeech || word,
         isCorrect,
-        aiFeedback,
+        aiFeedback: aiFeedback || '',
         score,
-        duration,
+        duration: duration || 0,
       },
     });
 
