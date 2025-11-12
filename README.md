@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Bolajon Platform
 
-## Getting Started
+AI yordamida bolalarga lotin alifbosida o‘zbek tili va boshlang‘ich matematika fanlarini o‘rgatish uchun yaratilgan gamifikatsiya platformasi.
 
-First, run the development server:
+### Monorepo tarkibi
+
+- `src/` – Next.js (App Router) frontend
+- `backend/` – FastAPI, SQLAlchemy, Alembic, bizning API
+- `docs/` – Talablar va arxitektura xujjatlari
+- `docker-compose.yml` – Lokal rivojlantirish muhiti (Postgres, Redis, Backend, Frontend)
+
+### Tez start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker compose up --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Backend: http://localhost:8000  
+Frontend: http://localhost:3000  
+Swagger: http://localhost:8000/docs
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Qo‘lda ishga tushirish
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Backend**
 
-## Learn More
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload
+```
 
-To learn more about Next.js, take a look at the following resources:
+**Frontend**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm install
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Muhim fayllar
 
-## Deploy on Vercel
+- `docs/requirements.md` – asosiy funksional talablar
+- `docs/architecture.md` – komponentlar va oqimlar sxemasi
+- `backend/alembic/` – migratsiyalar
+- `backend/app/db/seed.py` – boshlang‘ich kontent (harflar, matematika)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Envlarga misol
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`.env` (backend):
+
+```
+DATABASE_URL=postgresql+asyncpg://bolajon:bolajon@localhost:5432/bolajon
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini
+MUXLISA_API_URL=https://muxlisa.uz/api
+MUXLISA_API_KEY=your-muxlisa-key
+ADMIN_API_TOKEN=super-secret-token
+ALLOWED_ORIGINS=http://localhost:3000
+```
+
+### Test kontent
+
+Seed skripti quyidagi modulni yaratadi:
+
+- Harflar: `A`, `O`, `L`, `B` – 3–4 ta so‘z va rasm URL
+- Metrik: talaffuzni baholash va XP
+- Matematika: qo‘shish asoslari (`math-addition-basics`)
+- Achievements: `alphabet_master`, `math_explorer`
+
+### Keyingi qadamlar
+
+- Guardian/mentor kabineti
+- WebSocket asosida real-time feedback
+- Mini o‘yinlar va haftalik challenge’lar
+- CMS yoki admin panel
