@@ -428,25 +428,34 @@ export default function LearnRealtimePage() {
     setIsSpeaking(true);
     
     try {
-      const result = await textToSpeech(word);
+      // Muxlisa API dan urinib ko'rish
+      const result = await textToSpeech(word, 'child_female');
       
       if (result.audio_url && result.audio_url !== 'web-speech-api') {
         const audio = new Audio(result.audio_url);
-        audio.play().catch(err => console.warn('Audio play error:', err));
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          fallbackTTS(word);
+        };
+        await audio.play();
+      } else if (result.audio_base64) {
+        // Base64 audio
+        const audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          fallbackTTS(word);
+        };
+        await audio.play();
       } else {
         // Fallback: Web Speech API
-        if ('speechSynthesis' in window) {
-          const utterance = new SpeechSynthesisUtterance(word);
-          utterance.lang = 'uz-UZ';
-          utterance.rate = 0.9;
-          utterance.pitch = 1.1;
-          window.speechSynthesis.speak(utterance);
-        }
+        fallbackTTS(word);
       }
     } catch (error) {
       console.warn('TTS error:', error);
-    } finally {
-      setTimeout(() => setIsSpeaking(false), 2000);
+      setIsSpeaking(false);
+      fallbackTTS(word);
     }
   };
   
