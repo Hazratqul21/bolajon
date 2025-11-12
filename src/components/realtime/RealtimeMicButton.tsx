@@ -20,6 +20,8 @@ export function RealtimeMicButton({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const websocketRef = useRef<WebSocket | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const lastMessageRef = useRef<string>('');
+  const messageCountRef = useRef<number>(0);
 
   useEffect(() => {
     return () => {
@@ -132,9 +134,6 @@ export function RealtimeMicButton({
           console.warn('MediaRecorder start error:', err);
         }
       };
-
-      const lastMessageRef = useRef<string>('');
-      const messageCountRef = useRef<number>(0);
 
       ws.onmessage = (event) => {
         try {
