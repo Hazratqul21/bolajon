@@ -82,7 +82,8 @@ export default function LearnRealtimePage() {
   };
   
   const handleNextLetter = () => {
-    const letters = ['A', 'O', 'L', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', 'Z', 'O\'', 'G\'', 'Sh', 'Ch', 'Ng'];
+    // O'zbek alifbosi to'g'ri tartibi
+    const letters = ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', 'Z', 'O\'', 'G\'', 'Sh', 'Ch', 'Ng'];
     const currentIndex = letters.indexOf(currentLetter || 'A');
     const nextIndex = (currentIndex + 1) % letters.length;
     const nextLetter = letters[nextIndex];

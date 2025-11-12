@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { speechToText } from '@/lib/muxlisa-client';
 
 interface RealtimeMicButtonProps {
   onTranscript: (text: string) => void;
@@ -22,6 +23,8 @@ export function RealtimeMicButton({
   const audioChunksRef = useRef<Blob[]>([]);
   const lastMessageRef = useRef<string>('');
   const messageCountRef = useRef<number>(0);
+  const recognitionRef = useRef<any>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     return () => {
@@ -30,6 +33,12 @@ export function RealtimeMicButton({
       }
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
+      }
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
@@ -40,6 +49,56 @@ export function RealtimeMicButton({
       
       // Mikrofon permissions
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      
+      // Web Speech API (STT) - real-time transcription
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        recognition.lang = 'uz-UZ';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript + ' ';
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+          
+          // Final transcript ni yuborish
+          if (finalTranscript.trim()) {
+            console.log('Speech recognized:', finalTranscript);
+            onTranscript(finalTranscript.trim());
+          }
+        };
+        
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+        };
+        
+        recognition.onend = () => {
+          // Agar hali recording davom etayotgan bo'lsa, qayta boshlash
+          if (isRecording) {
+            try {
+              recognition.start();
+            } catch (err) {
+              console.warn('Recognition restart error:', err);
+            }
+          }
+        };
+        
+        recognitionRef.current = recognition;
+        recognition.start();
+        console.log('Web Speech API started');
+      }
 
       // User ID ni localStorage dan olish yoki default
       const childId = localStorage.getItem('bolajon_child_id') || '00000000-0000-0000-0000-000000000000';
@@ -217,8 +276,16 @@ export function RealtimeMicButton({
   };
 
   const stopRecording = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
     if (websocketRef.current) {
       websocketRef.current.send(JSON.stringify({ type: 'end_session' }));
