@@ -10,6 +10,10 @@ export default function LearnRealtimePage() {
   const [exampleWords, setExampleWords] = useState<string[]>([]);
   const [exampleImages, setExampleImages] = useState<string[]>([]);
   const [childName, setChildName] = useState<string>('');
+  const [showLibrary, setShowLibrary] = useState<boolean>(false);
+  
+  // O'zbek alifbosi to'g'ri tartibi
+  const allLetters = ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', 'Z', 'O\'', 'G\'', 'Sh', 'Ch', 'Ng'];
 
   useEffect(() => {
     // localStorage dan ma'lumotlarni olish
@@ -112,40 +116,31 @@ export default function LearnRealtimePage() {
     }, 500);
   };
   
-  const handleNextLetter = () => {
-    // O'zbek alifbosi to'g'ri tartibi
-    const letters = ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', 'Z', 'O\'', 'G\'', 'Sh', 'Ch', 'Ng'];
-    const currentIndex = letters.indexOf(currentLetter || 'A');
-    const nextIndex = (currentIndex + 1) % letters.length;
-    const nextLetter = letters[nextIndex];
-    
-    setCurrentLetter(nextLetter);
-    setExampleWords(getExampleWords(nextLetter));
+  const handleLetterSelect = (letter: string) => {
+    setCurrentLetter(letter);
+    setExampleWords(getExampleWords(letter));
+    setShowLibrary(false);
     setAiMessages((prev) => [
       ...prev,
       {
-        text: `Endi ${nextLetter} harfini o'rganamiz!`,
+        text: `Endi ${letter} harfini o'rganamiz!`,
         type: 'ai',
       },
     ]);
   };
+
+  const handleNextLetter = () => {
+    const currentIndex = allLetters.indexOf(currentLetter || 'A');
+    const nextIndex = (currentIndex + 1) % allLetters.length;
+    const nextLetter = allLetters[nextIndex];
+    handleLetterSelect(nextLetter);
+  };
   
   const handlePreviousLetter = () => {
-    // O'zbek alifbosi to'g'ri tartibi
-    const letters = ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', 'Z', 'O\'', 'G\'', 'Sh', 'Ch', 'Ng'];
-    const currentIndex = letters.indexOf(currentLetter || 'A');
-    const prevIndex = currentIndex === 0 ? letters.length - 1 : currentIndex - 1;
-    const prevLetter = letters[prevIndex];
-    
-    setCurrentLetter(prevLetter);
-    setExampleWords(getExampleWords(prevLetter));
-    setAiMessages((prev) => [
-      ...prev,
-      {
-        text: `Oldingi ${prevLetter} harfini ko'rib chiqamiz!`,
-        type: 'ai',
-      },
-    ]);
+    const currentIndex = allLetters.indexOf(currentLetter || 'A');
+    const prevIndex = currentIndex === 0 ? allLetters.length - 1 : currentIndex - 1;
+    const prevLetter = allLetters[prevIndex];
+    handleLetterSelect(prevLetter);
   };
   
   const getExampleWords = (letter: string): string[] => {
@@ -184,10 +179,51 @@ export default function LearnRealtimePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Harf ko'rinishi */}
-      {currentLetter && (
-        <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex">
+      {/* Harflar kutubxonasi - chap tomonda */}
+      <div className={`${showLibrary ? 'w-64' : 'w-16'} bg-white shadow-lg transition-all duration-300 overflow-hidden flex flex-col`}>
+        {/* Toggle tugmasi */}
+        <button
+          onClick={() => setShowLibrary(!showLibrary)}
+          className="w-full p-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center justify-center gap-2"
+        >
+          {showLibrary ? (
+            <>
+              <span>📚</span>
+              <span>Kutubxona</span>
+            </>
+          ) : (
+            <span className="text-2xl">📚</span>
+          )}
+        </button>
+
+        {/* Harflar ro'yxati */}
+        {showLibrary && (
+          <div className="flex-1 overflow-y-auto p-4">
+            <h3 className="text-lg font-bold mb-4 text-gray-800">Harflar</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {allLetters.map((letter) => (
+                <button
+                  key={letter}
+                  onClick={() => handleLetterSelect(letter)}
+                  className={`p-3 rounded-lg font-bold text-lg transition-all ${
+                    currentLetter === letter
+                      ? 'bg-blue-500 text-white scale-110 shadow-lg'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:scale-105'
+                  }`}
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Asosiy kontent */}
+      <div className="flex-1 overflow-y-auto">
+        {currentLetter && (
+          <div className="container mx-auto px-4 py-8">
           <div className="text-center mb-8">
             <div className="text-9xl font-bold text-blue-600 mb-4">{currentLetter}</div>
             <p className="text-2xl text-gray-700">Bu {currentLetter} harfi</p>
@@ -267,8 +303,9 @@ export default function LearnRealtimePage() {
               }}
             />
           </div>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
