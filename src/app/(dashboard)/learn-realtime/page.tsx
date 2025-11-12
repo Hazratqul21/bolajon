@@ -181,40 +181,49 @@ export default function LearnRealtimePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex">
       {/* Harflar kutubxonasi - chap tomonda */}
-      <div className={`${showLibrary ? 'w-64' : 'w-16'} bg-white shadow-lg transition-all duration-300 overflow-hidden flex flex-col`}>
+      <div className={`${showLibrary ? 'w-72' : 'w-20'} bg-gradient-to-b from-blue-50 to-purple-50 shadow-xl transition-all duration-300 overflow-hidden flex flex-col border-r-2 border-blue-200`}>
         {/* Toggle tugmasi */}
         <button
           onClick={() => setShowLibrary(!showLibrary)}
-          className="w-full p-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center justify-center gap-2"
+          className="w-full p-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold flex items-center justify-center gap-2 transition-all"
         >
           {showLibrary ? (
             <>
-              <span>📚</span>
-              <span>Kutubxona</span>
+              <span className="text-2xl">📚</span>
+              <span>Harflar Kutubxonasi</span>
             </>
           ) : (
-            <span className="text-2xl">📚</span>
+            <div className="flex flex-col items-center">
+              <span className="text-3xl mb-1">📚</span>
+              <span className="text-xs">Harflar</span>
+            </div>
           )}
         </button>
 
         {/* Harflar ro'yxati */}
         {showLibrary && (
           <div className="flex-1 overflow-y-auto p-4">
-            <h3 className="text-lg font-bold mb-4 text-gray-800">Harflar</h3>
-            <div className="grid grid-cols-3 gap-2">
+            <h3 className="text-xl font-bold mb-4 text-gray-800 text-center">O'zbek Alifbosi</h3>
+            <div className="grid grid-cols-4 gap-2">
               {allLetters.map((letter) => (
                 <button
                   key={letter}
                   onClick={() => handleLetterSelect(letter)}
-                  className={`p-3 rounded-lg font-bold text-lg transition-all ${
+                  className={`p-4 rounded-xl font-bold text-xl transition-all transform ${
                     currentLetter === letter
-                      ? 'bg-blue-500 text-white scale-110 shadow-lg'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:scale-105'
+                      ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white scale-110 shadow-xl ring-4 ring-blue-300'
+                      : 'bg-white hover:bg-blue-100 text-gray-700 hover:scale-105 shadow-md hover:shadow-lg border-2 border-transparent hover:border-blue-300'
                   }`}
+                  title={getExampleWords(letter)[0]}
                 >
                   {letter}
                 </button>
               ))}
+            </div>
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-gray-700 text-center">
+                💡 Hohlagan harfni tanlang va mashq qiling!
+              </p>
             </div>
           </div>
         )}
