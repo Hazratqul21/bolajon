@@ -78,6 +78,104 @@ export default function LearnPage() {
     }
   };
 
+  // Harflar uchun o'zbek tilida to'g'ri talaffuz qilish uchun fonetik matnlar
+  const getUzbekPhoneticText = (text: string): string => {
+    const letterPhonetics: Record<string, string> = {
+      'A': 'A',
+      'B': 'Be',
+      'D': 'De',
+      'E': 'E',
+      'F': 'Ef',
+      'G': 'Ge',
+      'H': 'Ha',
+      'I': 'I',
+      'J': 'Je',
+      'K': 'Ka',
+      'L': 'El',
+      'M': 'Em',
+      'N': 'En',
+      'O': 'O',
+      'P': 'Pe',
+      'Q': 'Qe',
+      'R': 'Er',
+      'S': 'Es',
+      'T': 'Te',
+      'U': 'U',
+      'V': 'Ve',
+      'X': 'Xa',
+      'Y': 'Ye',
+      'Z': 'Ze',
+      'O\'': 'O',
+      'G\'': 'Ge',
+      'Sh': 'Sha',
+      'Ch': 'Cha',
+      'Ng': 'En Ge',
+    };
+    
+    if (letterPhonetics[text]) {
+      return letterPhonetics[text];
+    }
+    
+    return text;
+  };
+  
+  // Fallback TTS funksiyasi - o'zbek tilida to'g'ri talaffuz qilish
+  const fallbackTTS = (text: string, onEnd: () => void) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      
+      const phoneticText = getUzbekPhoneticText(text);
+      const utterance = new SpeechSynthesisUtterance(phoneticText);
+      
+      const getVoices = () => window.speechSynthesis.getVoices();
+      const voices = getVoices();
+      
+      const findBestVoice = (voiceList: SpeechSynthesisVoice[]) => {
+        let voice = voiceList.find(v => v.lang.startsWith('tr'));
+        if (voice) return voice;
+        voice = voiceList.find(v => v.lang.startsWith('ru'));
+        if (voice) return voice;
+        voice = voiceList.find(v => v.lang.startsWith('kk'));
+        if (voice) return voice;
+        voice = voiceList.find(v => v.lang.startsWith('en'));
+        if (voice) return voice;
+        return voiceList[0];
+      };
+      
+      const bestVoice = findBestVoice(voices);
+      
+      if (bestVoice) {
+        utterance.voice = bestVoice;
+        utterance.lang = bestVoice.lang;
+      } else {
+        utterance.lang = 'tr-TR';
+      }
+      
+      utterance.rate = 0.7;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      
+      utterance.onend = onEnd;
+      utterance.onerror = onEnd;
+      
+      if (voices.length === 0) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          const updatedVoices = getVoices();
+          const updatedBestVoice = findBestVoice(updatedVoices);
+          if (updatedBestVoice) {
+            utterance.voice = updatedBestVoice;
+            utterance.lang = updatedBestVoice.lang;
+          }
+          window.speechSynthesis.speak(utterance);
+        };
+      } else {
+        window.speechSynthesis.speak(utterance);
+      }
+    } else {
+      onEnd();
+    }
+  };
+  
   // Harfni o'qish - yozib olish va saqlash
   const handlePlayLetter = async () => {
     if (!currentLetter || isSpeakingLetter) return;
@@ -106,36 +204,25 @@ export default function LearnPage() {
       } else if (result.audio_base64) {
         audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
       } else {
-        // Fallback: Web Speech API
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(currentLetter.letter);
-          const voices = window.speechSynthesis.getVoices();
-          const bestVoice = voices.find(v => v.lang.startsWith('tr')) || voices.find(v => v.lang.startsWith('ru')) || voices[0];
-          if (bestVoice) {
-            utterance.voice = bestVoice;
-            utterance.lang = bestVoice.lang;
-          }
-          utterance.rate = 0.7;
-          utterance.onend = () => setIsSpeakingLetter(false);
-          utterance.onerror = () => setIsSpeakingLetter(false);
-          window.speechSynthesis.speak(utterance);
-          setIsSpeakingLetter(false);
-          return;
-        } else {
-          setIsSpeakingLetter(false);
-          return;
-        }
+        // Fallback: Web Speech API with phonetic text
+        fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false));
+        return;
       }
       
       // Audio ni cache ga saqlash
       audio.onended = () => setIsSpeakingLetter(false);
-      audio.onerror = () => setIsSpeakingLetter(false);
+      audio.onerror = () => {
+        setIsSpeakingLetter(false);
+        // Fallback ga o'tish
+        fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false));
+      };
       letterAudioCacheRef.current.set(cacheKey, audio);
       await audio.play();
     } catch (error) {
       console.error('Error playing letter audio:', error);
       setIsSpeakingLetter(false);
+      // Fallback ga o'tish
+      fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false));
     }
   };
   
@@ -174,32 +261,12 @@ export default function LearnPage() {
       } else if (result.audio_base64) {
         audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
       } else {
-        // Fallback: Web Speech API
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(currentWord.word);
-          const voices = window.speechSynthesis.getVoices();
-          const bestVoice = voices.find(v => v.lang.startsWith('tr')) || voices.find(v => v.lang.startsWith('ru')) || voices[0];
-          if (bestVoice) {
-            utterance.voice = bestVoice;
-            utterance.lang = bestVoice.lang;
-          }
-          utterance.rate = 0.7;
-          utterance.onend = () => {
-            setIsPlayingAudio(false);
-            setIsSpeakingWord(false);
-          };
-          utterance.onerror = () => {
-            setIsPlayingAudio(false);
-            setIsSpeakingWord(false);
-          };
-          window.speechSynthesis.speak(utterance);
-          return;
-        } else {
+        // Fallback: Web Speech API with phonetic text
+        fallbackTTS(currentWord.word, () => {
           setIsPlayingAudio(false);
           setIsSpeakingWord(false);
-          return;
-        }
+        });
+        return;
       }
       
       // Audio ni cache ga saqlash
