@@ -400,23 +400,193 @@ export default function LearnRealtimePage() {
     }
   };
   
-  // Fallback TTS funksiyasi
+  // Harflar va so'zlar uchun o'zbek tilida to'g'ri talaffuz qilish uchun fonetik matnlar
+  const getUzbekPhoneticText = (text: string): string => {
+    // Harflar uchun maxsus matnlar
+    const letterPhonetics: Record<string, string> = {
+      'A': 'A harfi',
+      'B': 'Be harfi',
+      'D': 'De harfi',
+      'E': 'E harfi',
+      'F': 'Ef harfi',
+      'G': 'Ge harfi',
+      'H': 'Ha harfi',
+      'I': 'I harfi',
+      'J': 'Je harfi',
+      'K': 'Ka harfi',
+      'L': 'El harfi',
+      'M': 'Em harfi',
+      'N': 'En harfi',
+      'O': 'O harfi',
+      'P': 'Pe harfi',
+      'Q': 'Qe harfi',
+      'R': 'Er harfi',
+      'S': 'Es harfi',
+      'T': 'Te harfi',
+      'U': 'U harfi',
+      'V': 'Ve harfi',
+      'X': 'Xa harfi',
+      'Y': 'Ye harfi',
+      'Z': 'Ze harfi',
+      'O\'': 'O\' harfi',
+      'G\'': 'G\'e harfi',
+      'Sh': 'Sha harfi',
+      'Ch': 'Cha harfi',
+      'Ng': 'Nge harfi',
+    };
+    
+    // Agar text harf bo'lsa, fonetik matnni qaytarish
+    if (letterPhonetics[text]) {
+      return letterPhonetics[text];
+    }
+    
+    // So'zlar uchun - o'zbek so'zlarini to'g'ri talaffuz qilish
+    // Web Speech API uchun transliteration
+    const wordPhonetics: Record<string, string> = {
+      'Anor': 'Anor',
+      'Archa': 'Archa',
+      'Avtobus': 'Avtobus',
+      'Bola': 'Bola',
+      'Bosh': 'Bosh',
+      'Bog\'': 'Bog',
+      'Daraxt': 'Daraxt',
+      'Dost': 'Dost',
+      'Dars': 'Dars',
+      'Eshik': 'Eshik',
+      'Elak': 'Elak',
+      'Eshak': 'Eshak',
+      'Futbol': 'Futbol',
+      'Fayl': 'Fayl',
+      'Fen': 'Fen',
+      'Gul': 'Gul',
+      'Gap': 'Gap',
+      'G\'isht': 'Gisht',
+      'Havo': 'Havo',
+      'Hona': 'Hona',
+      'Hovli': 'Hovli',
+      'Ish': 'Ish',
+      'It': 'It',
+      'Ikki': 'Ikki',
+      'Javob': 'Javob',
+      'Juda': 'Juda',
+      'Juma': 'Juma',
+      'Kitob': 'Kitob',
+      'Kuch': 'Kuch',
+      'Kun': 'Kun',
+      'Lola': 'Lola',
+      'Limon': 'Limon',
+      'Lak': 'Lak',
+      'Mashina': 'Mashina',
+      'Maktab': 'Maktab',
+      'Mushuk': 'Mushuk',
+      'Non': 'Non',
+      'Nar': 'Nar',
+      'Nima': 'Nima',
+      'Olma': 'Olma',
+      'O\'q': 'Oq',
+      'O\'t': 'Ot',
+      'Poy': 'Poy',
+      'Pul': 'Pul',
+      'Pichoq': 'Pichoq',
+      'Qalam': 'Qalam',
+      'Qiz': 'Qiz',
+      'Qush': 'Qush',
+      'Rang': 'Rang',
+      'Rasm': 'Rasm',
+      'Ruchka': 'Ruchka',
+      'Suv': 'Suv',
+      'Sichqon': 'Sichqon',
+      'Sut': 'Sut',
+      'Tosh': 'Tosh',
+      'Tovuq': 'Tovuq',
+      'Tuz': 'Tuz',
+      'Uy': 'Uy',
+      'Uch': 'Uch',
+      'Uzum': 'Uzum',
+      'Voy': 'Voy',
+      'Vazifa': 'Vazifa',
+      'Vilka': 'Vilka',
+      'Xona': 'Xona',
+      'Xat': 'Xat',
+      'Xalq': 'Xalq',
+      'Yoz': 'Yoz',
+      'Yil': 'Yil',
+      'Yuz': 'Yuz',
+      'Zar': 'Zar',
+      'Zamin': 'Zamin',
+      'Zarb': 'Zarb',
+      'O\'g\'il': 'Ogil',
+      'G\'oza': 'Goza',
+      'G\'oyib': 'Goyib',
+      'Shahar': 'Shahar',
+      'Shamol': 'Shamol',
+      'Shox': 'Shox',
+      'Choy': 'Choy',
+      'Chiroq': 'Chiroq',
+      'Chiqish': 'Chiqish',
+      'Ming': 'Ming',
+      'Qo\'ng\'iroq': 'Qongiroq',
+      'Qo\'ng\'iz': 'Qongiz',
+    };
+    
+    // Agar text so'z bo'lsa, fonetik matnni qaytarish
+    if (wordPhonetics[text]) {
+      return wordPhonetics[text];
+    }
+    
+    // Agar topilmasa, asl matnni qaytarish
+    return text;
+  };
+  
+  // Fallback TTS funksiyasi - o'zbek tilida to'g'ri talaffuz qilish
   const fallbackTTS = (text: string) => {
     if ('speechSynthesis' in window) {
       // Avval barcha ovozlarni to'xtatish
       window.speechSynthesis.cancel();
       
-      const utterance = new SpeechSynthesisUtterance(text);
-      // O'zbek tili uchun turli variantlarni sinab ko'rish
-      utterance.lang = 'ru-RU'; // O'zbek uchun eng yaqin variant
-      utterance.rate = 0.7;
+      // O'zbek tilida to'g'ri talaffuz qilish uchun fonetik matn
+      const phoneticText = getUzbekPhoneticText(text);
+      
+      const utterance = new SpeechSynthesisUtterance(phoneticText);
+      
+      // O'zbek tili uchun eng yaxshi variantlarni sinab ko'rish
+      // Chrome/Edge uchun turk tili eng yaqin
+      const voices = window.speechSynthesis.getVoices();
+      const uzbekVoice = voices.find(v => 
+        v.lang.includes('tr') || v.lang.includes('ru') || v.lang.includes('kk')
+      );
+      
+      if (uzbekVoice) {
+        utterance.voice = uzbekVoice;
+        utterance.lang = uzbekVoice.lang;
+      } else {
+        // Fallback
+        utterance.lang = 'tr-TR'; // Turk tili o'zbek uchun eng yaqin
+      }
+      
+      utterance.rate = 0.75;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
       
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
       
-      window.speechSynthesis.speak(utterance);
+      // Voice list yuklanmaguncha kutish
+      if (voices.length === 0) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          const updatedVoices = window.speechSynthesis.getVoices();
+          const updatedUzbekVoice = updatedVoices.find(v => 
+            v.lang.includes('tr') || v.lang.includes('ru') || v.lang.includes('kk')
+          );
+          if (updatedUzbekVoice) {
+            utterance.voice = updatedUzbekVoice;
+            utterance.lang = updatedUzbekVoice.lang;
+          }
+          window.speechSynthesis.speak(utterance);
+        };
+      } else {
+        window.speechSynthesis.speak(utterance);
+      }
     } else {
       setIsSpeaking(false);
     }
