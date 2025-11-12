@@ -90,7 +90,8 @@ export default function LearnRealtimePage() {
         if (letter === "G'" && word.startsWith("g'")) return true;
         if (letter === "Sh" && word.startsWith("sh")) return true;
         if (letter === "Ch" && word.startsWith("ch")) return true;
-        if (letter === "Ng" && word.startsWith("ng")) return true;
+        // Ng harfi so'zning o'rtasida yoki oxirida bo'lishi mumkin
+        if (letter === "Ng" && (word.includes("ng") || word.includes("qo'ng") || word.includes("ming"))) return true;
         
         return false;
       });
@@ -173,7 +174,7 @@ export default function LearnRealtimePage() {
       'G\'': ['G\'isht', 'G\'oza', 'G\'oyib'],
       'Sh': ['Shahar', 'Shamol', 'Shox'],
       'Ch': ['Choy', 'Chiroq', 'Chiqish'],
-      'Ng': ['Nga', 'Ngiz', 'Ngaq'],
+      'Ng': ['Ming', 'Qo\'ng\'iroq', 'Qo\'ng\'iz'],
     };
     return examples[letter] || ['So\'z 1', 'So\'z 2', 'So\'z 3'];
   };
