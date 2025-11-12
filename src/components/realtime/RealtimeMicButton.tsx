@@ -101,7 +101,7 @@ export function RealtimeMicButton({
             if (ws.readyState === WebSocket.OPEN) {
               const now = Date.now();
               // Chunk larni kamroq yuborish (3 sekundda bir marta)
-              if (now - lastChunkTime > CHUNK_INTERVAL && chunkCounter % 3 === 0) {
+              if (now - lastChunkTime > CHUNK_INTERVAL) {
                 lastChunkTime = now;
                 // Real-time audio chunk yuborish
                 const reader = new FileReader();
