@@ -34,9 +34,9 @@ export default function LearnRealtimePage() {
     // Bo'sh xabarlarni filter qilish
     if (!text || !text.trim()) return;
     
-    // Takrorlanishni oldini olish (bir xil xabar 2 sekund ichida)
+    // Takrorlanishni oldini olish (bir xil xabar 3 sekund ichida)
     const now = Date.now();
-    if (text === lastTranscriptRef.current && (now - lastTranscriptTimeRef.current) < 2000) {
+    if (text === lastTranscriptRef.current && (now - lastTranscriptTimeRef.current) < 3000) {
       return;
     }
     
@@ -44,30 +44,39 @@ export default function LearnRealtimePage() {
     lastTranscriptTimeRef.current = now;
     
     // AI xabarlarini filter qilish (backend dan kelgan bo'sh xabarlar)
-    if (text.includes("Siz '' dedingiz") || text.includes("Siz '' dedingiz")) {
+    if (text.includes("Siz '' dedingiz") || 
+        text.includes("Salom! Men sizga") ||
+        text.trim().length < 2) {
       return;
     }
     
+    // Faqat qisqa va aniq xabarlarni qabul qilish
+    if (text.length > 100) {
+      return; // Uzun xabarlarni e'tiborsiz qoldirish
+    }
+    
     setAiMessages((prev) => {
-      // Oxirgi 50 ta xabarni saqlash (cheksiz o'sishni oldini olish)
+      // Oxirgi 30 ta xabarni saqlash (cheksiz o'sishni oldini olish)
       const newMessages = [...prev, { text, type: 'user' as const }];
-      return newMessages.slice(-50);
+      return newMessages.slice(-30);
     });
     
     // AI javobini simulyatsiya qilish (backend ishlamasa)
     setTimeout(() => {
       const letter = currentLetter || 'A';
-      const textLower = text.toLowerCase();
+      const textLower = text.toLowerCase().trim();
       const letterLower = letter.toLowerCase();
       
       // Harfni to'g'ri talaffuz qilganini tekshirish
-      const response = textLower.startsWith(letterLower) || textLower.includes(` ${letterLower}`)
+      const response = textLower.startsWith(letterLower) || 
+                       textLower.includes(` ${letterLower}`) ||
+                       textLower === letterLower
         ? `Ajoyib! Siz "${text}" dedingiz. Bu ${letter} harfi bilan boshlanadi!`
         : `Yaxshi! Siz "${text}" dedingiz. Keling, ${letter} harfini takrorlaymiz.`;
       
       setAiMessages((prev) => {
         const newMessages = [...prev, { text: response, type: 'ai' as const }];
-        return newMessages.slice(-50);
+        return newMessages.slice(-30);
       });
     }, 500);
   };
@@ -138,7 +147,7 @@ export default function LearnRealtimePage() {
           {exampleWords.length > 0 && (
             <div className="grid grid-cols-3 gap-4 mb-8">
               {exampleWords.map((word, idx) => (
-                <Card key={idx} className="text-center">
+                <Card key={`${currentLetter}-${word}-${idx}`} className="text-center">
                   <CardContent className="p-4">
                     <div className="text-2xl font-bold mb-2">{word}</div>
                     {exampleImages[idx] && (
@@ -188,13 +197,12 @@ export default function LearnRealtimePage() {
       <RealtimeMicButton
         onTranscript={handleTranscript}
         onStart={() => {
-          setCurrentLetter('A');
-          setExampleWords(['Anor', 'Olma', 'Archa']);
-          setExampleImages([
-            'https://cdn.example.com/images/alphabet/anor.png',
-            'https://cdn.example.com/images/alphabet/olma.png',
-            'https://cdn.example.com/images/alphabet/archa.png',
-          ]);
+          // Mikrofon bosilganda harfni o'zgartirmaslik
+          // Faqat birinchi marta A harfini o'rnatish
+          if (!currentLetter) {
+            setCurrentLetter('A');
+            setExampleWords(['Anor', 'Olma', 'Archa']);
+          }
         }}
       />
     </div>

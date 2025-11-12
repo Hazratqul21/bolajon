@@ -66,7 +66,7 @@ export function RealtimeMicButton({
             mediaRecorder.ondataavailable = () => {
               // Demo rejimda hech narsa yubormaymiz
             };
-            mediaRecorder.start(2000); // Har 2 sekundda chunk
+            mediaRecorder.start(3000); // Har 3 sekundda chunk
           } catch (err) {
             console.warn('Demo mode MediaRecorder error:', err);
           }
@@ -89,17 +89,19 @@ export function RealtimeMicButton({
         audioChunksRef.current = [];
 
         let lastChunkTime = 0;
-        const CHUNK_INTERVAL = 2000; // 2 sekundda bir marta yuborish
+        const CHUNK_INTERVAL = 3000; // 3 sekundda bir marta yuborish
 
+        let chunkCounter = 0;
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
             audioChunksRef.current.push(event.data);
+            chunkCounter++;
             
-            // Demo rejimda audio yubormaslik
+            // Demo rejimda audio yubormaslik - faqat WebSocket ochiq bo'lsa
             if (ws.readyState === WebSocket.OPEN) {
               const now = Date.now();
-              // Chunk larni kamroq yuborish (2 sekundda bir marta)
-              if (now - lastChunkTime > CHUNK_INTERVAL) {
+              // Chunk larni kamroq yuborish (3 sekundda bir marta)
+              if (now - lastChunkTime > CHUNK_INTERVAL && chunkCounter % 3 === 0) {
                 lastChunkTime = now;
                 // Real-time audio chunk yuborish
                 const reader = new FileReader();
@@ -118,6 +120,9 @@ export function RealtimeMicButton({
                 };
                 reader.readAsDataURL(event.data);
               }
+            } else {
+              // Demo rejimda - audio yozishni davom ettirish, lekin yubormaslik
+              console.log('Demo mode: Recording audio but not sending');
             }
           }
         };
@@ -128,8 +133,8 @@ export function RealtimeMicButton({
 
         // Demo rejimda ham ishlash uchun - audio yozishni boshlash
         try {
-          mediaRecorder.start(2000); // Har 2 sekundda chunk yuborish (kamroq xabar)
-          console.log('MediaRecorder started');
+          mediaRecorder.start(3000); // Har 3 sekundda chunk yuborish (kamroq xabar)
+          console.log('MediaRecorder started - mikrofon ishlamoqda');
         } catch (err) {
           console.warn('MediaRecorder start error:', err);
         }
@@ -162,8 +167,9 @@ export function RealtimeMicButton({
             
             // Backend dan kelgan bo'sh xabarlarni filter qilish
             if (messageText.includes("Siz '' dedingiz") || 
-                messageText.includes("Siz '' dedingiz") ||
-                messageText.trim().length < 3) {
+                messageText.includes("Salom! Men sizga") ||
+                messageText.trim().length < 2 ||
+                messageText.length > 100) {
               return;
             }
             
