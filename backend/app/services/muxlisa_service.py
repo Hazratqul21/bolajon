@@ -37,14 +37,17 @@ class MuxlisaClient:
       async with httpx.AsyncClient(timeout=self._timeout) as client:
         if audio_file:
           # FormData orqali audio fayl yuborish (to'g'ri format)
+          # Audio formatini aniqlash (webm, wav, mp3)
           files = {"audio": ("audio.wav", audio_file, "audio/wav")}
           # FormData uchun Content-Type ni o'chirish (httpx o'zi qo'shadi)
           headers = {"x-api-key": self._api_key}
+          logger.info("Muxlisa STT Request: audio_size=%s bytes", len(audio_file))
           response = await client.post(
               endpoint,
               files=files,
               headers=headers,
           )
+          logger.info("Muxlisa STT Response: status=%s", response.status_code)
         elif audio_url:
           # Audio URL orqali (agar API qo'llab-quvvatlasa)
           # Eslatma: Yangi API faqat FormData qabul qiladi, shuning uchun audio_url ishlamaydi
@@ -55,31 +58,68 @@ class MuxlisaClient:
         
         response.raise_for_status()
         data = response.json()
+        logger.info("Muxlisa STT Response Data: %s", data)
+        
+        # Turli formatlarni qo'llab-quvvatlash
+        transcript = data.get("transcript") or data.get("text") or data.get("result") or data.get("data", {}).get("transcript") or data.get("data", {}).get("text") or ""
+        confidence = data.get("confidence") or data.get("score") or data.get("data", {}).get("confidence")
+        duration = data.get("duration") or data.get("data", {}).get("duration")
+        
+        logger.info("Muxlisa STT Result: transcript=%s, confidence=%s, duration=%s", transcript, confidence, duration)
+        
         return {
-            "transcript": data.get("transcript") or data.get("text") or "",
-            "confidence": data.get("confidence"),
-            "duration": data.get("duration"),
+            "transcript": transcript,
+            "confidence": confidence,
+            "duration": duration,
         }
     except httpx.HTTPError as exc:
       logger.error("Muxlisa transcription failed: %s", exc)
       # Provide a graceful fallback so development can continue offline.
+      return {"transcript": None, "confidence": None, "duration": None, "error": str(exc)}
+    except Exception as exc:
+      logger.error("Muxlisa transcription unexpected error: %s", exc)
       return {"transcript": None, "confidence": None, "duration": None, "error": str(exc)}
 
   async def synthesize(self, *, text: str, voice: str = "child_female", language: str = "uz") -> dict[str, Any]:
     endpoint = f"{self._base_url}/v2/tts"
     payload = {"text": text, "voice": voice, "language": language}
     try:
+      logger.info("Muxlisa TTS Request: text=%s, voice=%s, language=%s", text, voice, language)
       async with httpx.AsyncClient(timeout=self._timeout) as client:
         response = await client.post(endpoint, json=payload, headers=self._headers())
+        logger.info("Muxlisa TTS Response: status=%s", response.status_code)
+        
+        # Agar response audio fayl bo'lsa (content-type: audio/*)
+        content_type = response.headers.get("content-type", "")
+        if "audio" in content_type:
+          logger.info("Muxlisa TTS: Audio file response detected")
+          import base64
+          audio_bytes = response.content
+          audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
+          return {
+              "audio_base64": audio_base64,
+              "text": text,
+          }
+        
+        # Agar response JSON bo'lsa
         response.raise_for_status()
         data = response.json()
+        logger.info("Muxlisa TTS Response Data: %s", data)
+        
+        # Turli formatlarni qo'llab-quvvatlash
+        audio_url = data.get("audio_url") or data.get("url") or data.get("result", {}).get("audio_url") or data.get("data", {}).get("audio_url")
+        audio_base64 = data.get("audio_base64") or data.get("audio") or data.get("result", {}).get("audio_base64") or data.get("data", {}).get("audio_base64")
+        
         return {
-            "audio_url": data.get("audio_url"),
-            "audio_base64": data.get("audio_base64"),
-            "text": data.get("text"),
+            "audio_url": audio_url,
+            "audio_base64": audio_base64,
+            "text": data.get("text") or text,
         }
     except httpx.HTTPError as exc:
       logger.error("Muxlisa synthesis failed: %s", exc)
+      return {"audio_url": None, "audio_base64": None, "error": str(exc)}
+    except Exception as exc:
+      logger.error("Muxlisa synthesis unexpected error: %s", exc)
       return {"audio_url": None, "audio_base64": None, "error": str(exc)}
 
 

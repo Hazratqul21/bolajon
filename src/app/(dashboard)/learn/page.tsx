@@ -195,19 +195,19 @@ export default function LearnPage() {
       
       // Muxlisa API dan olish
       const result = await textToSpeech(letterText, 'child_female');
-      console.log('Muxlisa API javobi:', result);
+      console.log('🔊 Muxlisa API javobi:', result);
       
       let audio: HTMLAudioElement | null = null;
       
       // Muxlisa API dan kelgan audio ni ishlatish
-      if (result.audio_url && result.audio_url !== 'web-speech-api') {
+      if (result.audio_base64) {
+        // Base64 audio - birinchi navbatda base64 ni tekshirish
+        audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
+        console.log('🔊 Muxlisa base64 audio ishlatilmoqda, length:', result.audio_base64.length);
+      } else if (result.audio_url && result.audio_url !== 'web-speech-api') {
         // Audio URL dan yuklash
         audio = new Audio(result.audio_url);
-        console.log('Muxlisa audio URL ishlatilmoqda:', result.audio_url);
-      } else if (result.audio_base64) {
-        // Base64 audio
-        audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
-        console.log('Muxlisa base64 audio ishlatilmoqda');
+        console.log('🔊 Muxlisa audio URL ishlatilmoqda:', result.audio_url);
       }
       
       if (audio) {
@@ -251,19 +251,19 @@ export default function LearnPage() {
       
       // Muxlisa API dan olish
       const result = await textToSpeech(currentWord.word, 'child_female');
-      console.log('Muxlisa API javobi:', result);
+      console.log('🔊 Muxlisa API javobi:', result);
       
       let audio: HTMLAudioElement | null = null;
       
       // Muxlisa API dan kelgan audio ni ishlatish
-      if (result.audio_url && result.audio_url !== 'web-speech-api') {
+      if (result.audio_base64) {
+        // Base64 audio - birinchi navbatda base64 ni tekshirish
+        audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
+        console.log('🔊 Muxlisa base64 audio ishlatilmoqda, length:', result.audio_base64.length);
+      } else if (result.audio_url && result.audio_url !== 'web-speech-api') {
         // Audio URL dan yuklash
         audio = new Audio(result.audio_url);
-        console.log('Muxlisa audio URL ishlatilmoqda:', result.audio_url);
-      } else if (result.audio_base64) {
-        // Base64 audio
-        audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
-        console.log('Muxlisa base64 audio ishlatilmoqda');
+        console.log('🔊 Muxlisa audio URL ishlatilmoqda:', result.audio_url);
       }
       
       if (audio) {

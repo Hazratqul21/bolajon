@@ -25,38 +25,64 @@ export interface TTSResponse {
  */
 export async function speechToText(audioBlob: Blob): Promise<STTResponse> {
   if (!MUXLISA_API_KEY) {
-    // Fallback: Web Speech API ishlatish
+    console.warn('MUXLISA_API_KEY not found, using Web Speech API fallback');
     return await webSpeechToText(audioBlob);
   }
 
+  // Audio fayl formatini aniqlash
+  const mimeType = audioBlob.type || 'audio/webm';
+  const extension = mimeType.includes('webm') ? 'webm' : mimeType.includes('wav') ? 'wav' : 'mp3';
+  const fileName = `audio.${extension}`;
+
   const formData = new FormData();
-  formData.append('audio', audioBlob, 'audio.webm');
+  formData.append('audio', audioBlob, fileName);
 
   try {
+    console.log('🎤 Muxlisa STT Request:', {
+      url: `${MUXLISA_API_URL}/v2/stt`,
+      fileName,
+      mimeType,
+      size: audioBlob.size,
+    });
+
     const response = await fetch(`${MUXLISA_API_URL}/v2/stt`, {
       method: 'POST',
       headers: {
         'x-api-key': MUXLISA_API_KEY,
+        // FormData uchun Content-Type ni o'chirish (browser o'zi qo'shadi)
       },
       body: formData,
     });
 
+    console.log('🎤 Muxlisa STT Response Status:', response.status, response.statusText);
+
     if (!response.ok) {
-      const error = await response.text();
-      console.warn('Muxlisa STT API error, using fallback:', error);
+      const errorText = await response.text();
+      console.error('🎤 Muxlisa STT API error:', errorText);
       return await webSpeechToText(audioBlob);
     }
 
     const data = await response.json();
-    // Muxlisa API javobini tekshirish
-    console.log('Muxlisa STT response:', data);
+    console.log('🎤 Muxlisa STT Response Data:', data);
+    
+    // Turli formatlarni qo'llab-quvvatlash
+    const transcript = data.transcript || data.text || data.result || data.data?.transcript || data.data?.text || '';
+    const confidence = data.confidence || data.score || data.data?.confidence;
+    const duration = data.duration || data.data?.duration;
+    
+    console.log('🎤 Muxlisa STT Result:', {
+      transcript,
+      confidence,
+      duration,
+    });
+    
     return {
-      transcript: data.transcript || data.text || data.result || '',
-      confidence: data.confidence || data.score,
-      duration: data.duration,
+      transcript,
+      confidence,
+      duration,
     };
   } catch (error) {
-    console.warn('Muxlisa STT error, using fallback:', error);
+    console.error('🎤 Muxlisa STT error:', error);
     return await webSpeechToText(audioBlob);
   }
 }
@@ -66,11 +92,18 @@ export async function speechToText(audioBlob: Blob): Promise<STTResponse> {
  */
 export async function textToSpeech(text: string, voice: string = 'child_female'): Promise<TTSResponse> {
   if (!MUXLISA_API_KEY) {
-    // Fallback: Web Speech API ishlatish
+    console.warn('MUXLISA_API_KEY not found, using Web Speech API fallback');
     return await webTextToSpeech(text);
   }
 
   try {
+    console.log('🔊 Muxlisa TTS Request:', {
+      url: `${MUXLISA_API_URL}/v2/tts`,
+      text,
+      voice,
+      language: 'uz',
+    });
+
     const response = await fetch(`${MUXLISA_API_URL}/v2/tts`, {
       method: 'POST',
       headers: {
@@ -84,38 +117,59 @@ export async function textToSpeech(text: string, voice: string = 'child_female')
       }),
     });
 
+    console.log('🔊 Muxlisa TTS Response Status:', response.status, response.statusText);
+    console.log('🔊 Muxlisa TTS Response Headers:', Object.fromEntries(response.headers.entries()));
+
+    // Agar response audio fayl bo'lsa (content-type: audio/*)
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('audio')) {
+      console.log('🔊 Muxlisa TTS: Audio file response detected');
+      const audioBlob = await response.blob();
+      const reader = new FileReader();
+      return new Promise((resolve) => {
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          const base64Data = base64.split(',')[1]; // data:audio/...;base64, ni olib tashlash
+          console.log('🔊 Muxlisa TTS: Base64 audio received, length:', base64Data.length);
+          resolve({
+            audio_base64: base64Data,
+            text: text,
+          });
+        };
+        reader.onerror = () => {
+          console.error('🔊 Muxlisa TTS: FileReader error');
+          resolve({ error: 'FileReader error' });
+        };
+        reader.readAsDataURL(audioBlob);
+      });
+    }
+
+    // Agar response JSON bo'lsa
     if (!response.ok) {
-      const error = await response.text();
-      console.warn('Muxlisa TTS API error, using fallback:', error);
+      const errorText = await response.text();
+      console.error('🔊 Muxlisa TTS API error:', errorText);
       return await webTextToSpeech(text);
     }
 
     const data = await response.json();
-    // Muxlisa API javobini tekshirish
-    console.log('Muxlisa TTS response:', data);
+    console.log('🔊 Muxlisa TTS Response Data:', data);
     
-    // Muxlisa API response formatini tekshirish
-    // Ehtimol: { audio_url: "...", audio: "...", result: "..." } formatida
-    let audioUrl = data.audio_url || data.url || data.result?.audio_url;
-    let audioBase64 = data.audio_base64 || data.audio || data.result?.audio_base64;
+    // Turli formatlarni qo'llab-quvvatlash
+    let audioUrl = data.audio_url || data.url || data.result?.audio_url || data.data?.audio_url;
+    let audioBase64 = data.audio_base64 || data.audio || data.result?.audio_base64 || data.data?.audio_base64;
     
-    // Agar audio_url yoki audio_base64 bo'lmasa, boshqa formatlarni tekshirish
+    // Agar hech qanday audio topilmasa
     if (!audioUrl && !audioBase64) {
-      // Ehtimol, to'g'ridan-to'g'ri audio fayl qaytariladi
-      if (response.headers.get('content-type')?.includes('audio')) {
-        const audioBlob = await response.blob();
-        const reader = new FileReader();
-        return new Promise((resolve) => {
-          reader.onloadend = () => {
-            const base64 = reader.result as string;
-            resolve({
-              audio_base64: base64.split(',')[1], // data:audio/...;base64, ni olib tashlash
-            });
-          };
-          reader.readAsDataURL(audioBlob);
-        });
-      }
+      console.warn('🔊 Muxlisa TTS: No audio found in response, using fallback');
+      return await webTextToSpeech(text);
     }
+    
+    console.log('🔊 Muxlisa TTS: Audio found:', {
+      hasUrl: !!audioUrl,
+      hasBase64: !!audioBase64,
+      urlLength: audioUrl?.length,
+      base64Length: audioBase64?.length,
+    });
     
     return {
       audio_url: audioUrl,
@@ -123,7 +177,7 @@ export async function textToSpeech(text: string, voice: string = 'child_female')
       text: data.text || text,
     };
   } catch (error) {
-    console.warn('Muxlisa TTS error, using fallback:', error);
+    console.error('🔊 Muxlisa TTS error:', error);
     return await webTextToSpeech(text);
   }
 }
