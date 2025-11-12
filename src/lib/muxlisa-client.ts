@@ -48,9 +48,11 @@ export async function speechToText(audioBlob: Blob): Promise<STTResponse> {
     }
 
     const data = await response.json();
+    // Muxlisa API javobini tekshirish
+    console.log('Muxlisa STT response:', data);
     return {
-      transcript: data.transcript || data.text || '',
-      confidence: data.confidence,
+      transcript: data.transcript || data.text || data.result || '',
+      confidence: data.confidence || data.score,
       duration: data.duration,
     };
   } catch (error) {
@@ -89,9 +91,12 @@ export async function textToSpeech(text: string, voice: string = 'child_female')
     }
 
     const data = await response.json();
+    // Muxlisa API javobini tekshirish
+    console.log('Muxlisa TTS response:', data);
     return {
-      audio_url: data.audio_url,
-      audio_base64: data.audio_base64,
+      audio_url: data.audio_url || data.url,
+      audio_base64: data.audio_base64 || data.audio,
+      text: data.text,
     };
   } catch (error) {
     console.warn('Muxlisa TTS error, using fallback:', error);

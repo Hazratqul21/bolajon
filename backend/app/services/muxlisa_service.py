@@ -36,19 +36,22 @@ class MuxlisaClient:
     try:
       async with httpx.AsyncClient(timeout=self._timeout) as client:
         if audio_file:
-          # FormData orqali audio fayl yuborish
+          # FormData orqali audio fayl yuborish (to'g'ri format)
           files = {"audio": ("audio.wav", audio_file, "audio/wav")}
+          # FormData uchun Content-Type ni o'chirish (httpx o'zi qo'shadi)
+          headers = {"x-api-key": self._api_key}
           response = await client.post(
               endpoint,
               files=files,
-              headers=self._headers(content_type=None),  # FormData uchun Content-Type ni browser o'zi qo'shadi
+              headers=headers,
           )
         elif audio_url:
-          # JSON orqali audio_url yuborish
-          payload = {"audio_url": audio_url, "language": language}
-          response = await client.post(endpoint, json=payload, headers=self._headers())
+          # Audio URL orqali (agar API qo'llab-quvvatlasa)
+          # Eslatma: Yangi API faqat FormData qabul qiladi, shuning uchun audio_url ishlamaydi
+          logger.warning("audio_url parameter is not supported by v2 API, use audio_file instead")
+          return {"transcript": None, "confidence": None, "duration": None, "error": "audio_url not supported"}
         else:
-          raise ValueError("Either audio_file or audio_url must be provided for transcription.")
+          raise ValueError("Either audio_file must be provided for transcription.")
         
         response.raise_for_status()
         data = response.json()

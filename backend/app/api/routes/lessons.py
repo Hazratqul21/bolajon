@@ -32,9 +32,13 @@ async def submit_attempt(
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found.")
 
   transcript_info = {"transcript": request.transcript_hint}
-  if request.audio_url or request.audio_base64:
-    transcript_info = await muxlisa.transcribe(audio_url=request.audio_url, audio_base64=request.audio_base64)
-  transcript = transcript_info.get("transcript") or request.transcript_hint
+  # Eslatma: audio_base64 va audio_url yangi API da ishlamaydi
+  # Frontend dan FormData orqali audio_file kelishi kerak
+  # Hozircha transcript_hint ishlatiladi
+  if request.transcript_hint:
+    transcript = request.transcript_hint
+  else:
+    transcript = transcript_info.get("transcript") or ""
 
   evaluation = await openai_adapter.evaluate_pronunciation(
       transcript=transcript,
