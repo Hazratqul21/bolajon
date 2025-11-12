@@ -86,7 +86,8 @@ export function RealtimeMicButton({
         
         recognition.onend = () => {
           // Agar hali recording davom etayotgan bo'lsa, qayta boshlash
-          if (isRecording) {
+          // isRecording state ni to'g'ri tekshirish uchun ref ishlatamiz
+          if (recognitionRef.current && mediaRecorderRef.current?.state === 'recording') {
             try {
               recognition.start();
             } catch (err) {
@@ -98,6 +99,13 @@ export function RealtimeMicButton({
         recognitionRef.current = recognition;
         recognition.start();
         console.log('Web Speech API started');
+        
+        // Web Speech API ishga tushdi, recording ni boshlash
+        setIsConnecting(false);
+        setIsRecording(true);
+        onStart?.();
+      } else {
+        console.warn('Web Speech API not supported, using MediaRecorder only');
       }
 
       // User ID ni localStorage dan olish yoki default
