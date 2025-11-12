@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { UZBEK_ALPHABET } from '@/data/alphabet';
 import { LetterCard } from '@/components/learn/LetterCard';
 import { WordPractice } from '@/components/learn/WordPractice';
@@ -12,12 +12,19 @@ import { useLearningStore } from '@/store/learning-store';
 import { useUserStore } from '@/store/user-store';
 import type { AIFeedback } from '@/types/api';
 import { Button } from '@/components/ui/button';
+import { textToSpeech } from '@/lib/muxlisa-client';
 
 export default function LearnPage() {
   const { currentLetterIndex, currentWordIndex, setCurrentLetterIndex, setCurrentWordIndex, currentFeedback, setCurrentFeedback } = useLearningStore();
   const { user } = useUserStore();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isSpeakingLetter, setIsSpeakingLetter] = useState(false);
+  const [isSpeakingWord, setIsSpeakingWord] = useState(false);
+  
+  // Audio cache - yozib olingan ovozlarni saqlash
+  const audioCacheRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const letterAudioCacheRef = useRef<Map<string, HTMLAudioElement>>(new Map());
 
   const currentLetter = UZBEK_ALPHABET[currentLetterIndex];
   const currentWord = currentLetter?.words[currentWordIndex];
@@ -71,29 +78,145 @@ export default function LearnPage() {
     }
   };
 
+  // Harfni o'qish - yozib olish va saqlash
+  const handlePlayLetter = async () => {
+    if (!currentLetter || isSpeakingLetter) return;
+    
+    setIsSpeakingLetter(true);
+    
+    try {
+      // Cache dan tekshirish
+      const cacheKey = currentLetter.letter;
+      if (letterAudioCacheRef.current.has(cacheKey)) {
+        const cachedAudio = letterAudioCacheRef.current.get(cacheKey)!;
+        cachedAudio.currentTime = 0;
+        cachedAudio.onended = () => setIsSpeakingLetter(false);
+        cachedAudio.onerror = () => setIsSpeakingLetter(false);
+        await cachedAudio.play();
+        return;
+      }
+      
+      // Muxlisa API dan olish
+      const result = await textToSpeech(currentLetter.letter, 'child_female');
+      
+      let audio: HTMLAudioElement;
+      
+      if (result.audio_url && result.audio_url !== 'web-speech-api') {
+        audio = new Audio(result.audio_url);
+      } else if (result.audio_base64) {
+        audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
+      } else {
+        // Fallback: Web Speech API
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(currentLetter.letter);
+          const voices = window.speechSynthesis.getVoices();
+          const bestVoice = voices.find(v => v.lang.startsWith('tr')) || voices.find(v => v.lang.startsWith('ru')) || voices[0];
+          if (bestVoice) {
+            utterance.voice = bestVoice;
+            utterance.lang = bestVoice.lang;
+          }
+          utterance.rate = 0.7;
+          utterance.onend = () => setIsSpeakingLetter(false);
+          utterance.onerror = () => setIsSpeakingLetter(false);
+          window.speechSynthesis.speak(utterance);
+          setIsSpeakingLetter(false);
+          return;
+        } else {
+          setIsSpeakingLetter(false);
+          return;
+        }
+      }
+      
+      // Audio ni cache ga saqlash
+      audio.onended = () => setIsSpeakingLetter(false);
+      audio.onerror = () => setIsSpeakingLetter(false);
+      letterAudioCacheRef.current.set(cacheKey, audio);
+      await audio.play();
+    } catch (error) {
+      console.error('Error playing letter audio:', error);
+      setIsSpeakingLetter(false);
+    }
+  };
+  
+  // So'zni o'qish - yozib olish va saqlash
   const handlePlayAudio = async () => {
-    if (!currentWord) return;
+    if (!currentWord || isSpeakingWord) return;
 
     setIsPlayingAudio(true);
+    setIsSpeakingWord(true);
+    
     try {
-      const response = await fetch('/api/speech/synthesize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: currentWord.word }),
-      });
-
-      if (response.ok) {
-        const audioBlob = await response.blob();
-        const audio = new Audio(URL.createObjectURL(audioBlob));
-        audio.onended = () => {
-          URL.revokeObjectURL(audio.src);
+      // Cache dan tekshirish
+      const cacheKey = currentWord.word;
+      if (audioCacheRef.current.has(cacheKey)) {
+        const cachedAudio = audioCacheRef.current.get(cacheKey)!;
+        cachedAudio.currentTime = 0;
+        cachedAudio.onended = () => {
           setIsPlayingAudio(false);
+          setIsSpeakingWord(false);
         };
-        audio.play();
+        cachedAudio.onerror = () => {
+          setIsPlayingAudio(false);
+          setIsSpeakingWord(false);
+        };
+        await cachedAudio.play();
+        return;
       }
+      
+      // Muxlisa API dan olish
+      const result = await textToSpeech(currentWord.word, 'child_female');
+      
+      let audio: HTMLAudioElement;
+      
+      if (result.audio_url && result.audio_url !== 'web-speech-api') {
+        audio = new Audio(result.audio_url);
+      } else if (result.audio_base64) {
+        audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
+      } else {
+        // Fallback: Web Speech API
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(currentWord.word);
+          const voices = window.speechSynthesis.getVoices();
+          const bestVoice = voices.find(v => v.lang.startsWith('tr')) || voices.find(v => v.lang.startsWith('ru')) || voices[0];
+          if (bestVoice) {
+            utterance.voice = bestVoice;
+            utterance.lang = bestVoice.lang;
+          }
+          utterance.rate = 0.7;
+          utterance.onend = () => {
+            setIsPlayingAudio(false);
+            setIsSpeakingWord(false);
+          };
+          utterance.onerror = () => {
+            setIsPlayingAudio(false);
+            setIsSpeakingWord(false);
+          };
+          window.speechSynthesis.speak(utterance);
+          return;
+        } else {
+          setIsPlayingAudio(false);
+          setIsSpeakingWord(false);
+          return;
+        }
+      }
+      
+      // Audio ni cache ga saqlash
+      audio.onended = () => {
+        setIsPlayingAudio(false);
+        setIsSpeakingWord(false);
+      };
+      audio.onerror = () => {
+        setIsPlayingAudio(false);
+        setIsSpeakingWord(false);
+      };
+      audioCacheRef.current.set(cacheKey, audio);
+      await audio.play();
     } catch (error) {
       console.error('Error playing audio:', error);
       setIsPlayingAudio(false);
+      setIsSpeakingWord(false);
     }
   };
 
@@ -127,9 +250,31 @@ export default function LearnPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-center mb-4">
-            {currentLetter.letter} harfini o'rganamiz
-          </h1>
+          <div className="text-center mb-4">
+            <div className="text-9xl font-bold text-blue-600 mb-4">{currentLetter.letter}</div>
+            <h1 className="text-3xl font-bold mb-4">
+              {currentLetter.letter} harfini o'rganamiz
+            </h1>
+            {/* Harfni o'qish tugmasi */}
+            <Button
+              onClick={handlePlayLetter}
+              disabled={isSpeakingLetter}
+              size="lg"
+              className="bg-purple-500 hover:bg-purple-600 text-white mb-4"
+            >
+              {isSpeakingLetter ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  Ovoz berilmoqda...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">🔊</span>
+                  Harfni o'qish
+                </>
+              )}
+            </Button>
+          </div>
           <ProgressBar
             current={currentLetterIndex + 1}
             total={UZBEK_ALPHABET.length}
@@ -163,6 +308,7 @@ export default function LearnPage() {
             word={currentWord}
             onPlayAudio={handlePlayAudio}
             isRecording={isAnalyzing}
+            isPlayingAudio={isPlayingAudio}
           />
         </div>
 

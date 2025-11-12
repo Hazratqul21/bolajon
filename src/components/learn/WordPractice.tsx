@@ -9,9 +9,10 @@ interface WordPracticeProps {
   onPlayAudio?: () => void;
   onRecord?: () => void;
   isRecording?: boolean;
+  isPlayingAudio?: boolean;
 }
 
-export function WordPractice({ word, onPlayAudio, onRecord, isRecording = false }: WordPracticeProps) {
+export function WordPractice({ word, onPlayAudio, onRecord, isRecording = false, isPlayingAudio = false }: WordPracticeProps) {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
@@ -24,10 +25,21 @@ export function WordPractice({ word, onPlayAudio, onRecord, isRecording = false 
         <div className="flex gap-4 justify-center">
           <Button
             onClick={onPlayAudio}
+            disabled={isPlayingAudio}
             size="lg"
-            className="bg-green-500 hover:bg-green-600 text-white"
+            className="bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            🔊 Tinglash
+            {isPlayingAudio ? (
+              <>
+                <span className="animate-spin mr-2">⏳</span>
+                Ovoz berilmoqda...
+              </>
+            ) : (
+              <>
+                <span className="mr-2">🔊</span>
+                So'zni tinglash
+              </>
+            )}
           </Button>
           <Button
             onClick={onRecord}
