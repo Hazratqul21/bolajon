@@ -48,8 +48,32 @@ export function RealtimeMicButton({
       console.log('WebSocket connecting to:', wsUrl);
       const ws = new WebSocket(wsUrl);
       websocketRef.current = ws;
-
+      
+      // WebSocket ulanmasa ham demo rejimda ishlash
+      const timeoutId = setTimeout(() => {
+        if (websocketRef.current?.readyState !== WebSocket.OPEN) {
+          console.warn('WebSocket timeout, using demo mode');
+          setIsConnecting(false);
+          setIsRecording(true);
+          onStart?.();
+          
+          // Demo rejimda audio yozish
+          try {
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            mediaRecorder.ondataavailable = () => {
+              // Demo rejimda hech narsa yubormaymiz
+            };
+            mediaRecorder.start(1000);
+          } catch (err) {
+            console.warn('Demo mode MediaRecorder error:', err);
+          }
+        }
+      }, 3000); // 3 sekunddan keyin demo rejimga o'tish
+      
+      // WebSocket ulansa timeout ni bekor qilish
       ws.onopen = () => {
+        clearTimeout(timeoutId);
         console.log('WebSocket connected successfully');
         setIsConnecting(false);
         setIsRecording(true);
@@ -96,28 +120,6 @@ export function RealtimeMicButton({
           console.warn('MediaRecorder start error:', err);
         }
       };
-      
-      // WebSocket ulanmasa ham demo rejimda ishlash
-      setTimeout(() => {
-        if (ws.readyState !== WebSocket.OPEN && !isRecording) {
-          console.warn('WebSocket timeout, using demo mode');
-          setIsConnecting(false);
-          setIsRecording(true);
-          onStart?.();
-          
-          // Demo rejimda audio yozish
-          try {
-            const mediaRecorder = new MediaRecorder(stream);
-            mediaRecorderRef.current = mediaRecorder;
-            mediaRecorder.ondataavailable = () => {
-              // Demo rejimda hech narsa yubormaymiz
-            };
-            mediaRecorder.start(1000);
-          } catch (err) {
-            console.warn('Demo mode MediaRecorder error:', err);
-          }
-        }
-      }, 3000); // 3 sekunddan keyin demo rejimga o'tish
 
       ws.onmessage = (event) => {
         try {
