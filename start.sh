@@ -20,11 +20,25 @@ if ! systemctl is-active --quiet postgresql; then
     fi
 fi
 
-# Database yaratish
-echo "🗄️  Database yaratish..."
-sudo -u postgres psql -c "CREATE DATABASE bolajon;" 2>/dev/null || echo "Database allaqachon mavjud"
-sudo -u postgres psql -c "CREATE USER bolajon WITH PASSWORD 'bolajon';" 2>/dev/null || echo "User allaqachon mavjud"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE bolajon TO bolajon;" 2>/dev/null || echo "Grant allaqachon berilgan"
+# Database yaratish va sozlash
+echo "🗄️  Database yaratish va sozlash..."
+if [ -f "./setup_database.sh" ]; then
+    ./setup_database.sh
+else
+    echo "⚠️  setup_database.sh topilmadi. Qo'lda sozlash..."
+    sudo -u postgres psql <<EOF
+SELECT 'CREATE DATABASE bolajon' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'bolajon')\gexec
+DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_user WHERE usename = 'bolajon') THEN CREATE USER bolajon WITH PASSWORD 'bolajon'; END IF; END \$\$;
+\c bolajon
+GRANT ALL PRIVILEGES ON DATABASE bolajon TO bolajon;
+GRANT ALL ON SCHEMA public TO bolajon;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO bolajon;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO bolajon;
+ALTER DATABASE bolajon OWNER TO bolajon;
+ALTER SCHEMA public OWNER TO bolajon;
+\q
+EOF
+fi
 
 # Backend setup
 echo "🔧 Backend ni sozlash..."
