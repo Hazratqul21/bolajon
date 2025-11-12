@@ -24,7 +24,7 @@ export default function LearnRealtimePage() {
       },
     ]);
     setCurrentLetter('A');
-    setExampleWords(['Anor', 'Olma', 'Archa']);
+    setExampleWords(['Anor', 'Archa', 'Avtobus']);
   }, []);
 
   const lastTranscriptRef = useRef<string>('');
@@ -261,7 +261,7 @@ export default function LearnRealtimePage() {
           // Faqat birinchi marta A harfini o'rnatish
           if (!currentLetter) {
             setCurrentLetter('A');
-            setExampleWords(['Anor', 'Olma', 'Archa']);
+            setExampleWords(['Anor', 'Archa', 'Avtobus']);
           }
         }}
       />
