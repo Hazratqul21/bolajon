@@ -69,9 +69,9 @@ export default function LearnRealtimePage() {
       const exampleWords = getExampleWords(letter);
       
       // So'zni tekshirish - harfdan boshlanadigan so'z aytilganmi?
-      const words = textLower.split(/\s+/);
+      const words = textLower.split(/\s+/).filter(w => w.length > 0);
       const startsWithLetter = words.some(word => {
-        // To'g'ridan-to'g'ri harf bilan boshlanish
+        // To'g'ridan-to'g'ri harf bilan boshlanish (faqat birinchi harf)
         if (word.startsWith(letterLower)) return true;
         
         // Maxsus harflar uchun (O', G', Sh, Ch, Ng)
@@ -79,12 +79,14 @@ export default function LearnRealtimePage() {
         if (letter === "G'" && word.startsWith("g'")) return true;
         if (letter === "Sh" && word.startsWith("sh")) return true;
         if (letter === "Ch" && word.startsWith("ch")) return true;
-        if (letter === "Ng" && word.includes("ng")) return true;
+        if (letter === "Ng" && word.startsWith("ng")) return true;
         
-        // Misol so'zlardan birini aytganmi?
-        return exampleWords.some(exWord => 
-          word.includes(exWord.toLowerCase())
-        );
+        // Misol so'zlardan birini to'liq aytganmi? (to'g'ri talaffuz)
+        return exampleWords.some(exWord => {
+          const exWordLower = exWord.toLowerCase();
+          // To'liq so'z mos kelishi yoki birinchi harf bilan boshlanishi
+          return word === exWordLower || word.startsWith(exWordLower.charAt(0));
+        });
       });
       
       let response = '';
@@ -146,7 +148,7 @@ export default function LearnRealtimePage() {
   
   const getExampleWords = (letter: string): string[] => {
     const examples: Record<string, string[]> = {
-      'A': ['Anor', 'Olma', 'Archa'],
+      'A': ['Anor', 'Archa', 'Avtobus'],
       'O': ['Olma', 'O\'q', 'O\'t'],
       'L': ['Lola', 'Limon', 'Lak'],
       'B': ['Bola', 'Bosh', 'Bog\''],
