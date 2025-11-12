@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { RealtimeMicButton } from '@/components/realtime/RealtimeMicButton';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -27,25 +27,48 @@ export default function LearnRealtimePage() {
     setExampleWords(['Anor', 'Olma', 'Archa']);
   }, []);
 
+  const lastTranscriptRef = useRef<string>('');
+  const lastTranscriptTimeRef = useRef<number>(0);
+
   const handleTranscript = (text: string) => {
-    if (!text.trim()) return;
+    // Bo'sh xabarlarni filter qilish
+    if (!text || !text.trim()) return;
     
-    setAiMessages((prev) => [...prev, { text, type: 'user' }]);
+    // Takrorlanishni oldini olish (bir xil xabar 2 sekund ichida)
+    const now = Date.now();
+    if (text === lastTranscriptRef.current && (now - lastTranscriptTimeRef.current) < 2000) {
+      return;
+    }
+    
+    lastTranscriptRef.current = text;
+    lastTranscriptTimeRef.current = now;
+    
+    // AI xabarlarini filter qilish (backend dan kelgan bo'sh xabarlar)
+    if (text.includes("Siz '' dedingiz") || text.includes("Siz '' dedingiz")) {
+      return;
+    }
+    
+    setAiMessages((prev) => {
+      // Oxirgi 50 ta xabarni saqlash (cheksiz o'sishni oldini olish)
+      const newMessages = [...prev, { text, type: 'user' as const }];
+      return newMessages.slice(-50);
+    });
     
     // AI javobini simulyatsiya qilish (backend ishlamasa)
     setTimeout(() => {
       const letter = currentLetter || 'A';
-      const response = text.toLowerCase().includes(letter.toLowerCase())
+      const textLower = text.toLowerCase();
+      const letterLower = letter.toLowerCase();
+      
+      // Harfni to'g'ri talaffuz qilganini tekshirish
+      const response = textLower.startsWith(letterLower) || textLower.includes(` ${letterLower}`)
         ? `Ajoyib! Siz "${text}" dedingiz. Bu ${letter} harfi bilan boshlanadi!`
         : `Yaxshi! Siz "${text}" dedingiz. Keling, ${letter} harfini takrorlaymiz.`;
       
-      setAiMessages((prev) => [
-        ...prev,
-        {
-          text: response,
-          type: 'ai',
-        },
-      ]);
+      setAiMessages((prev) => {
+        const newMessages = [...prev, { text: response, type: 'ai' as const }];
+        return newMessages.slice(-50);
+      });
     }, 500);
   };
   
@@ -73,8 +96,32 @@ export default function LearnRealtimePage() {
       'L': ['Lola', 'Limon', 'Lak'],
       'B': ['Bola', 'Bosh', 'Bog\''],
       'D': ['Daraxt', 'Dost', 'Dars'],
+      'E': ['Eshik', 'Elak', 'Eshak'],
+      'F': ['Futbol', 'Fayl', 'Fen'],
+      'G': ['Gul', 'Gap', 'G\'isht'],
+      'H': ['Havo', 'Hona', 'Hovli'],
+      'I': ['Ish', 'It', 'Ikki'],
+      'J': ['Javob', 'Juda', 'Juma'],
+      'K': ['Kitob', 'Kuch', 'Kun'],
+      'M': ['Mashina', 'Maktab', 'Mushuk'],
+      'N': ['Non', 'Nar', 'Nima'],
+      'P': ['Poy', 'Pul', 'Pichoq'],
+      'Q': ['Qalam', 'Qiz', 'Qush'],
+      'R': ['Rang', 'Rasm', 'Ruchka'],
+      'S': ['Suv', 'Sichqon', 'Sut'],
+      'T': ['Tosh', 'Tovuq', 'Tuz'],
+      'U': ['Uy', 'Uch', 'Uzum'],
+      'V': ['Voy', 'Vazifa', 'Vilka'],
+      'X': ['Xona', 'Xat', 'Xalq'],
+      'Y': ['Yoz', 'Yil', 'Yuz'],
+      'Z': ['Zar', 'Zamin', 'Zarb'],
+      'O\'': ['O\'q', 'O\'t', 'O\'g\'il'],
+      'G\'': ['G\'isht', 'G\'oza', 'G\'oyib'],
+      'Sh': ['Shahar', 'Shamol', 'Shox'],
+      'Ch': ['Choy', 'Chiroq', 'Chiqish'],
+      'Ng': ['Nga', 'Ngiz', 'Ngaq'],
     };
-    return examples[letter] || [`${letter} so'z 1`, `${letter} so'z 2`, `${letter} so'z 3`];
+    return examples[letter] || ['So\'z 1', 'So\'z 2', 'So\'z 3'];
   };
 
   return (

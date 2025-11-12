@@ -64,7 +64,7 @@ export function RealtimeMicButton({
             mediaRecorder.ondataavailable = () => {
               // Demo rejimda hech narsa yubormaymiz
             };
-            mediaRecorder.start(1000);
+            mediaRecorder.start(2000); // Har 2 sekundda chunk
           } catch (err) {
             console.warn('Demo mode MediaRecorder error:', err);
           }
@@ -86,25 +86,37 @@ export function RealtimeMicButton({
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
 
+        let lastChunkTime = 0;
+        const CHUNK_INTERVAL = 2000; // 2 sekundda bir marta yuborish
+
         mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+          if (event.data.size > 0) {
             audioChunksRef.current.push(event.data);
-            // Real-time audio chunk yuborish
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const base64Audio = reader.result as string;
-              try {
-                ws.send(
-                  JSON.stringify({
-                    type: 'audio_chunk',
-                    audio_base64: base64Audio.split(',')[1],
-                  })
-                );
-              } catch (err) {
-                console.warn('Error sending audio chunk:', err);
+            
+            // Demo rejimda audio yubormaslik
+            if (ws.readyState === WebSocket.OPEN) {
+              const now = Date.now();
+              // Chunk larni kamroq yuborish (2 sekundda bir marta)
+              if (now - lastChunkTime > CHUNK_INTERVAL) {
+                lastChunkTime = now;
+                // Real-time audio chunk yuborish
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  const base64Audio = reader.result as string;
+                  try {
+                    ws.send(
+                      JSON.stringify({
+                        type: 'audio_chunk',
+                        audio_base64: base64Audio.split(',')[1],
+                      })
+                    );
+                  } catch (err) {
+                    console.warn('Error sending audio chunk:', err);
+                  }
+                };
+                reader.readAsDataURL(event.data);
               }
-            };
-            reader.readAsDataURL(event.data);
+            }
           }
         };
 
@@ -114,12 +126,15 @@ export function RealtimeMicButton({
 
         // Demo rejimda ham ishlash uchun - audio yozishni boshlash
         try {
-          mediaRecorder.start(1000); // Har 1 sekundda chunk yuborish
+          mediaRecorder.start(2000); // Har 2 sekundda chunk yuborish (kamroq xabar)
           console.log('MediaRecorder started');
         } catch (err) {
           console.warn('MediaRecorder start error:', err);
         }
       };
+
+      const lastMessageRef = useRef<string>('');
+      const messageCountRef = useRef<number>(0);
 
       ws.onmessage = (event) => {
         try {
@@ -127,12 +142,36 @@ export function RealtimeMicButton({
           console.log('WebSocket message received:', data);
           
           if (data.type === 'ai_message') {
-            // AI javobini ko'rsatish
-            console.log('AI Response:', data.text);
-            // Transcript callback chaqirish
-            if (data.text) {
-              onTranscript(data.text);
+            const messageText = data.text || '';
+            
+            // Bo'sh xabarlarni filter qilish
+            if (!messageText.trim()) {
+              return;
             }
+            
+            // Takrorlanishni oldini olish
+            if (messageText === lastMessageRef.current) {
+              messageCountRef.current++;
+              // Bir xil xabar 5 martadan ko'p takrorlansa, e'tibor bermaslik
+              if (messageCountRef.current > 5) {
+                return;
+              }
+            } else {
+              lastMessageRef.current = messageText;
+              messageCountRef.current = 1;
+            }
+            
+            // Backend dan kelgan bo'sh xabarlarni filter qilish
+            if (messageText.includes("Siz '' dedingiz") || 
+                messageText.includes("Siz '' dedingiz") ||
+                messageText.trim().length < 3) {
+              return;
+            }
+            
+            console.log('AI Response:', messageText);
+            // Transcript callback chaqirish
+            onTranscript(messageText);
+            
             // TTS audio play qilish
             if (data.audio_url) {
               const audio = new Audio(data.audio_url);
