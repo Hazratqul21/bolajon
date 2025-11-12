@@ -99,6 +99,24 @@ export default function LearnRealtimePage() {
     ]);
   };
   
+  const handlePreviousLetter = () => {
+    // O'zbek alifbosi to'g'ri tartibi
+    const letters = ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', 'Z', 'O\'', 'G\'', 'Sh', 'Ch', 'Ng'];
+    const currentIndex = letters.indexOf(currentLetter || 'A');
+    const prevIndex = currentIndex === 0 ? letters.length - 1 : currentIndex - 1;
+    const prevLetter = letters[prevIndex];
+    
+    setCurrentLetter(prevLetter);
+    setExampleWords(getExampleWords(prevLetter));
+    setAiMessages((prev) => [
+      ...prev,
+      {
+        text: `Oldingi ${prevLetter} harfini ko'rib chiqamiz!`,
+        type: 'ai',
+      },
+    ]);
+  };
+  
   const getExampleWords = (letter: string): string[] => {
     const examples: Record<string, string[]> = {
       'A': ['Anor', 'Olma', 'Archa'],
@@ -182,11 +200,17 @@ export default function LearnRealtimePage() {
             </div>
           )}
 
-          {/* Keyingi harf tugmasi */}
-          <div className="text-center">
+          {/* Harf navigatsiya tugmalari */}
+          <div className="text-center flex gap-4 justify-center items-center">
+            <button
+              onClick={handlePreviousLetter}
+              className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
+            >
+              ← Oldingi harf
+            </button>
             <button
               onClick={handleNextLetter}
-              className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-colors"
+              className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
             >
               Keyingi harf →
             </button>
