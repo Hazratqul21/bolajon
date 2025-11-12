@@ -71,22 +71,24 @@ export default function LearnRealtimePage() {
       // So'zni tekshirish - harfdan boshlanadigan so'z aytilganmi?
       const words = textLower.split(/\s+/).filter(w => w.length > 0);
       const startsWithLetter = words.some(word => {
-        // To'g'ridan-to'g'ri harf bilan boshlanish (faqat birinchi harf)
-        if (word.startsWith(letterLower)) return true;
+        // 1. Misol so'zlardan birini to'liq aytganmi? (eng aniq)
+        const exactMatch = exampleWords.some(exWord => {
+          const exWordLower = exWord.toLowerCase();
+          return word === exWordLower || word.startsWith(exWordLower);
+        });
+        if (exactMatch) return true;
         
-        // Maxsus harflar uchun (O', G', Sh, Ch, Ng)
+        // 2. To'g'ridan-to'g'ri harf bilan boshlanish (faqat birinchi harf)
+        if (word.charAt(0) === letterLower) return true;
+        
+        // 3. Maxsus harflar uchun (O', G', Sh, Ch, Ng)
         if (letter === "O'" && word.startsWith("o'")) return true;
         if (letter === "G'" && word.startsWith("g'")) return true;
         if (letter === "Sh" && word.startsWith("sh")) return true;
         if (letter === "Ch" && word.startsWith("ch")) return true;
         if (letter === "Ng" && word.startsWith("ng")) return true;
         
-        // Misol so'zlardan birini to'liq aytganmi? (to'g'ri talaffuz)
-        return exampleWords.some(exWord => {
-          const exWordLower = exWord.toLowerCase();
-          // To'liq so'z mos kelishi yoki birinchi harf bilan boshlanishi
-          return word === exWordLower || word.startsWith(exWordLower.charAt(0));
-        });
+        return false;
       });
       
       let response = '';
