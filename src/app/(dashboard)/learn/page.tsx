@@ -193,8 +193,8 @@ export default function LearnPage() {
       const letterText = currentLetter.name || currentLetter.letter;
       console.log('Muxlisa API ga yuborilayotgan matn:', letterText);
       
-      // Muxlisa API dan olish
-      const result = await textToSpeech(letterText, 'child_female');
+      // Muxlisa API dan olish - Maftuna ovozida
+      const result = await textToSpeech(letterText, 'maftuna');
       console.log('🔊 Muxlisa API javobi:', result);
       
       let audio: HTMLAudioElement | null = null;
@@ -249,8 +249,8 @@ export default function LearnPage() {
       // Har safar yangi ovoz olish - cache ni skip qilish (Muxlisa API dan to'g'ri ovoz olish uchun)
       console.log('Muxlisa API ga yuborilayotgan so\'z:', currentWord.word);
       
-      // Muxlisa API dan olish
-      const result = await textToSpeech(currentWord.word, 'child_female');
+      // Muxlisa API dan olish - Maftuna ovozida
+      const result = await textToSpeech(currentWord.word, 'maftuna');
       console.log('🔊 Muxlisa API javobi:', result);
       
       let audio: HTMLAudioElement | null = null;

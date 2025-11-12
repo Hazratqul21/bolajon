@@ -80,12 +80,9 @@ class MuxlisaClient:
       logger.error("Muxlisa transcription unexpected error: %s", exc)
       return {"transcript": None, "confidence": None, "duration": None, "error": str(exc)}
 
-  # Qiz bola ovozida gapirish uchun voice parametri
-  # Muxlisa API da quyidagi variantlar mavjud bo'lishi mumkin:
-  # - 'child_female' - qiz bola ovozida (default)
-  # - 'girl' - qiz ovozida
-  # - 'female_child' - qiz bola ovozida
-  async def synthesize(self, *, text: str, voice: str = "child_female", language: str = "uz") -> dict[str, Any]:
+  # Maftuna - qiz bola ovozida gapirish
+  # Muxlisa AI dan "Maftuna" nomli qiz bola ovozini olish
+  async def synthesize(self, *, text: str, voice: str = "maftuna", language: str = "uz") -> dict[str, Any]:
     endpoint = f"{self._base_url}/v2/tts"
     payload = {"text": text, "voice": voice, "language": language}
     try:

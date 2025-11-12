@@ -368,8 +368,8 @@ export default function LearnRealtimePage() {
       const phoneticText = getUzbekPhoneticText(letter);
       console.log('Muxlisa API ga yuborilayotgan harf:', letter, 'fonetik:', phoneticText);
       
-      // Muxlisa API dan urinib ko'rish
-      const result = await textToSpeech(phoneticText, 'child_female');
+      // Muxlisa API dan urinib ko'rish - Maftuna ovozida
+      const result = await textToSpeech(phoneticText, 'maftuna');
       console.log('🔊 Muxlisa API javobi:', result);
       
       let audio: HTMLAudioElement | null = null;
@@ -635,8 +635,8 @@ export default function LearnRealtimePage() {
       const phoneticText = getUzbekPhoneticText(word);
       console.log('Muxlisa API ga yuborilayotgan so\'z:', word, 'fonetik:', phoneticText);
       
-      // Muxlisa API dan urinib ko'rish
-      const result = await textToSpeech(phoneticText || word, 'child_female');
+      // Muxlisa API dan urinib ko'rish - Maftuna ovozida
+      const result = await textToSpeech(phoneticText || word, 'maftuna');
       console.log('🔊 Muxlisa API javobi:', result);
       
       let audio: HTMLAudioElement | null = null;
