@@ -90,6 +90,11 @@ export async function speechToText(audioBlob: Blob): Promise<STTResponse> {
 /**
  * Text-to-Speech: Matnni ovozga aylantirish
  */
+// Qiz bola ovozida gapirish uchun voice parametri
+// Muxlisa API da quyidagi variantlar mavjud bo'lishi mumkin:
+// - 'child_female' - qiz bola ovozida (default)
+// - 'girl' - qiz ovozida
+// - 'female_child' - qiz bola ovozida
 export async function textToSpeech(text: string, voice: string = 'child_female'): Promise<TTSResponse> {
   if (!MUXLISA_API_KEY) {
     console.warn('MUXLISA_API_KEY not found, using Web Speech API fallback');
