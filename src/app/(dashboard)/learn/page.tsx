@@ -79,52 +79,58 @@ export default function LearnPage() {
   };
 
   // Harflar uchun o'zbek tilida to'g'ri talaffuz qilish uchun fonetik matnlar
-  const getUzbekPhoneticText = (text: string): string => {
+  const getUzbekPhoneticText = (text: string, letterName?: string): string => {
+    // Agar letterName bo'lsa, undan foydalanish (eng to'g'ri)
+    if (letterName) {
+      return letterName;
+    }
+    
+    // Harflar uchun maxsus matnlar - Web Speech API uchun to'g'ri talaffuz qilish
     const letterPhonetics: Record<string, string> = {
-      'A': 'A',
-      'B': 'Be',
-      'D': 'De',
-      'E': 'E',
-      'F': 'Ef',
-      'G': 'Ge',
-      'H': 'Ha',
-      'I': 'I',
-      'J': 'Je',
-      'K': 'Ka',
-      'L': 'El',
-      'M': 'Em',
-      'N': 'En',
-      'O': 'O',
-      'P': 'Pe',
-      'Q': 'Qe',
-      'R': 'Er',
-      'S': 'Es',
-      'T': 'Te',
-      'U': 'U',
-      'V': 'Ve',
-      'X': 'Xa',
-      'Y': 'Ye',
-      'Z': 'Ze',
-      'O\'': 'O',
-      'G\'': 'Ge',
-      'Sh': 'Sha',
-      'Ch': 'Cha',
-      'Ng': 'En Ge',
+      'A': 'a',
+      'B': 'be',
+      'D': 'de',
+      'E': 'e',
+      'F': 'ef',
+      'G': 'ge',
+      'H': 'ha',
+      'I': 'i',
+      'J': 'je',
+      'K': 'ka',
+      'L': 'el',
+      'M': 'em',
+      'N': 'en',
+      'O': 'o',
+      'P': 'pe',
+      'Q': 'qe',
+      'R': 'er',
+      'S': 'es',
+      'T': 'te',
+      'U': 'u',
+      'V': 've',
+      'X': 'xa',
+      'Y': 'ye',
+      'Z': 'ze',
+      'O\'': 'o',
+      'G\'': 'ge',
+      'Sh': 'sha',
+      'Ch': 'cha',
+      'Ng': 'en ge',
     };
     
     if (letterPhonetics[text]) {
       return letterPhonetics[text];
     }
     
-    return text;
+    return text.toLowerCase();
   };
   
   // Fallback TTS funksiyasi - o'zbek tilida to'g'ri talaffuz qilish
-  const fallbackTTS = (text: string, onEnd: () => void) => {
+  const fallbackTTS = (text: string, onEnd: () => void, letterName?: string) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       
-      const phoneticText = getUzbekPhoneticText(text);
+      const phoneticText = getUzbekPhoneticText(text, letterName);
       const utterance = new SpeechSynthesisUtterance(phoneticText);
       
       const getVoices = () => window.speechSynthesis.getVoices();
@@ -204,8 +210,8 @@ export default function LearnPage() {
       } else if (result.audio_base64) {
         audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
       } else {
-        // Fallback: Web Speech API with phonetic text
-        fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false));
+        // Fallback: Web Speech API with phonetic text (harfning nomidan foydalanish)
+        fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false), currentLetter.name);
         return;
       }
       
@@ -214,7 +220,7 @@ export default function LearnPage() {
       audio.onerror = () => {
         setIsSpeakingLetter(false);
         // Fallback ga o'tish
-        fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false));
+        fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false), currentLetter.name);
       };
       letterAudioCacheRef.current.set(cacheKey, audio);
       await audio.play();
@@ -222,7 +228,7 @@ export default function LearnPage() {
       console.error('Error playing letter audio:', error);
       setIsSpeakingLetter(false);
       // Fallback ga o'tish
-      fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false));
+      fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false), currentLetter.name);
     }
   };
   
