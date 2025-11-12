@@ -402,7 +402,8 @@ export default function LearnRealtimePage() {
   
   // Harflar va so'zlar uchun o'zbek tilida to'g'ri talaffuz qilish uchun fonetik matnlar
   const getUzbekPhoneticText = (text: string): string => {
-    // Harflar uchun maxsus matnlar - o'zbek tilida to'g'ri talaffuz qilish
+    // Harflar uchun maxsus matnlar - Web Speech API uchun to'g'ri talaffuz qilish
+    // O'zbek harflarini Web Speech API to'g'ri o'qishi uchun fonetik matnlar
     const letterPhonetics: Record<string, string> = {
       'A': 'A',
       'B': 'Be',
@@ -428,11 +429,11 @@ export default function LearnRealtimePage() {
       'X': 'Xa',
       'Y': 'Ye',
       'Z': 'Ze',
-      'O\'': 'Oq',
-      'G\'': 'Ge',
+      'O\'': 'O',  // O' harfi uchun oddiy O
+      'G\'': 'Ge', // G' harfi uchun Ge
       'Sh': 'Sha',
       'Ch': 'Cha',
-      'Ng': 'Nge',
+      'Ng': 'En Ge', // Ng harfi uchun En Ge
     };
     
     // Agar text harf bo'lsa, fonetik matnni qaytarish
@@ -551,20 +552,46 @@ export default function LearnRealtimePage() {
       
       // O'zbek tili uchun eng yaxshi variantlarni sinab ko'rish
       // Chrome/Edge uchun turk tili eng yaqin
-      const voices = window.speechSynthesis.getVoices();
-      const uzbekVoice = voices.find(v => 
-        v.lang.includes('tr') || v.lang.includes('ru') || v.lang.includes('kk')
-      );
+      const getVoices = () => {
+        return window.speechSynthesis.getVoices();
+      };
       
-      if (uzbekVoice) {
-        utterance.voice = uzbekVoice;
-        utterance.lang = uzbekVoice.lang;
+      const voices = getVoices();
+      
+      // O'zbek tiliga eng yaqin ovozlarni qidirish
+      // Priority: Turkish > Russian > Kazakh > English
+      const findBestVoice = (voiceList: SpeechSynthesisVoice[]) => {
+        // Turk tili - eng yaqin
+        let voice = voiceList.find(v => v.lang.startsWith('tr'));
+        if (voice) return voice;
+        
+        // Rus tili
+        voice = voiceList.find(v => v.lang.startsWith('ru'));
+        if (voice) return voice;
+        
+        // Qozoq tili
+        voice = voiceList.find(v => v.lang.startsWith('kk'));
+        if (voice) return voice;
+        
+        // Ingliz tili (fallback)
+        voice = voiceList.find(v => v.lang.startsWith('en'));
+        if (voice) return voice;
+        
+        // Har qanday ovoz
+        return voiceList[0];
+      };
+      
+      const bestVoice = findBestVoice(voices);
+      
+      if (bestVoice) {
+        utterance.voice = bestVoice;
+        utterance.lang = bestVoice.lang;
       } else {
-        // Fallback
-        utterance.lang = 'tr-TR'; // Turk tili o'zbek uchun eng yaqin
+        // Fallback - turk tili
+        utterance.lang = 'tr-TR';
       }
       
-      utterance.rate = 0.75;
+      utterance.rate = 0.7; // Sekinroq - to'g'ri talaffuz qilish uchun
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
       
@@ -574,13 +601,11 @@ export default function LearnRealtimePage() {
       // Voice list yuklanmaguncha kutish
       if (voices.length === 0) {
         window.speechSynthesis.onvoiceschanged = () => {
-          const updatedVoices = window.speechSynthesis.getVoices();
-          const updatedUzbekVoice = updatedVoices.find(v => 
-            v.lang.includes('tr') || v.lang.includes('ru') || v.lang.includes('kk')
-          );
-          if (updatedUzbekVoice) {
-            utterance.voice = updatedUzbekVoice;
-            utterance.lang = updatedUzbekVoice.lang;
+          const updatedVoices = getVoices();
+          const updatedBestVoice = findBestVoice(updatedVoices);
+          if (updatedBestVoice) {
+            utterance.voice = updatedBestVoice;
+            utterance.lang = updatedBestVoice.lang;
           }
           window.speechSynthesis.speak(utterance);
         };
