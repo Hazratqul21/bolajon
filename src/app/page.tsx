@@ -49,6 +49,11 @@ export default function Home() {
       }
 
       // Child onboarding
+      // Preferences array'ni dictionary'ga o'zgartirish (backend dict kutmoqda)
+      const preferencesDict = data.preferences && data.preferences.length > 0
+        ? { interests: data.preferences }
+        : {};
+      
       const response = await fetch('http://localhost:8000/api/auth/child/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -57,7 +62,7 @@ export default function Home() {
           nickname: data.firstName,
           age: data.age,
           guardian_id: guardianId,
-          preferences: data.preferences || {},
+          preferences: preferencesDict,
         }),
       });
 
@@ -72,7 +77,26 @@ export default function Home() {
         router.push('/learn-realtime');
       } else {
         const errorData = await response.json().catch(() => ({ detail: 'Server xatosi' }));
-        setError(errorData.detail || 'Xatolik yuz berdi');
+        // FastAPI validation errors return detail as array of objects
+        let errorMessage = 'Xatolik yuz berdi';
+        if (errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            // Pydantic validation errors: [{type, loc, msg, input}, ...]
+            errorMessage = errorData.detail
+              .map((err: any) => {
+                if (typeof err === 'object' && err.msg) {
+                  return err.msg;
+                }
+                return String(err);
+              })
+              .join(', ');
+          } else if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          } else {
+            errorMessage = String(errorData.detail);
+          }
+        }
+        setError(errorMessage);
         setIsLoading(false);
       }
     } catch (error) {

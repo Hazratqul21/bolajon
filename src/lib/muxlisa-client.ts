@@ -29,9 +29,31 @@ export async function speechToText(audioBlob: Blob): Promise<STTResponse> {
     return await webSpeechToText(audioBlob);
   }
 
-  // Audio fayl formatini aniqlash
-  const mimeType = audioBlob.type || 'audio/webm';
-  const extension = mimeType.includes('webm') ? 'webm' : mimeType.includes('wav') ? 'wav' : 'mp3';
+  // Audio fayl formatini aniqlash - Muxlisa STT API qo'llab-quvvatlaydigan formatlar
+  // Qo'llab-quvvatlanadigan: audio/webm, audio/wav, audio/ogg, audio/mp4, audio/flac, audio/aac, audio/mpeg
+  let mimeType = audioBlob.type || 'audio/webm';
+  
+  // Agar codecs bilan bo'lsa (masalan, audio/webm;codecs=opus), faqat audio/webm qoldiramiz
+  if (mimeType.includes(';codecs=')) {
+    mimeType = mimeType.split(';')[0];
+  }
+  
+  // Extension aniqlash
+  let extension = 'webm';
+  if (mimeType.includes('wav')) {
+    extension = 'wav';
+  } else if (mimeType.includes('ogg')) {
+    extension = 'ogg';
+  } else if (mimeType.includes('mp4') || mimeType.includes('m4a')) {
+    extension = 'mp4';
+  } else if (mimeType.includes('flac')) {
+    extension = 'flac';
+  } else if (mimeType.includes('aac')) {
+    extension = 'aac';
+  } else if (mimeType.includes('mpeg') || mimeType.includes('mp3')) {
+    extension = 'mp3';
+  }
+  
   const fileName = `audio.${extension}`;
 
   const formData = new FormData();

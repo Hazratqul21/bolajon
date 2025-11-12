@@ -87,6 +87,42 @@ export function RealtimeMicButton({
         
         recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
           console.error('Speech recognition error:', event.error);
+          
+          // Network xatosi bo'lsa, Web Speech API'ni o'chirib, faqat MediaRecorder ishlatamiz
+          if (event.error === 'network' || event.error === 'no-speech' || event.error === 'aborted') {
+            console.warn('Web Speech API xatosi, MediaRecorder + Muxlisa STT ishlatilmoqda');
+            if (recognitionRef.current) {
+              try {
+                recognitionRef.current.stop();
+              } catch (err) {
+                console.warn('Error stopping recognition:', err);
+              }
+              recognitionRef.current = null;
+            }
+            // MediaRecorder davom etadi, audio Muxlisa STT'ga yuboriladi
+            return;
+          }
+          
+          // Boshqa xatolar uchun
+          if (event.error === 'not-allowed') {
+            alert('Mikrofon ruxsati berilmagan. Iltimos, browser sozlamalaridan ruxsat bering.');
+            setIsConnecting(false);
+            setIsRecording(false);
+            return;
+          }
+          
+          // Recognition qayta boshlashga harakat qilish (faqat ba'zi xatolar uchun)
+          if (event.error !== 'no-speech' && recognitionRef.current && mediaRecorderRef.current?.state === 'recording') {
+            setTimeout(() => {
+              if (recognitionRef.current && mediaRecorderRef.current?.state === 'recording') {
+                try {
+                  recognitionRef.current.start();
+                } catch (err) {
+                  console.warn('Recognition restart after error failed:', err);
+                }
+              }
+            }, 1000);
+          }
         };
         
         recognition.onend = () => {
@@ -131,9 +167,26 @@ export function RealtimeMicButton({
           setIsRecording(true);
           onStart?.();
           
-          // Demo rejimda audio yozish
+          // Demo rejimda audio yozish - Muxlisa STT API qo'llab-quvvatlaydigan formatda
           try {
-            const mediaRecorder = new MediaRecorder(stream);
+            let mimeType = 'audio/webm'; // Default
+            const supportedTypes = [
+              'audio/webm',
+              'audio/ogg',
+              'audio/wav',
+            ];
+            
+            // Browser qo'llab-quvvatlaydigan formatni topish
+            for (const type of supportedTypes) {
+              if (MediaRecorder.isTypeSupported(type)) {
+                mimeType = type;
+                break;
+              }
+            }
+            
+            const mediaRecorder = new MediaRecorder(stream, {
+              mimeType: mimeType,
+            });
             mediaRecorderRef.current = mediaRecorder;
             mediaRecorder.ondataavailable = () => {
               // Demo rejimda hech narsa yubormaymiz
@@ -153,9 +206,27 @@ export function RealtimeMicButton({
         setIsRecording(true);
         onStart?.();
 
-        // MediaRecorder yaratish
+        // MediaRecorder yaratish - Muxlisa STT API qo'llab-quvvatlaydigan formatda
+        // Qo'llab-quvvatlanadigan formatlar: audio/webm (codecsiz), audio/ogg, audio/wav
+        let mimeType = 'audio/webm'; // Default
+        const supportedTypes = [
+          'audio/webm',
+          'audio/ogg',
+          'audio/wav',
+        ];
+        
+        // Browser qo'llab-quvvatlaydigan formatni topish
+        for (const type of supportedTypes) {
+          if (MediaRecorder.isTypeSupported(type)) {
+            mimeType = type;
+            break;
+          }
+        }
+        
+        console.log('MediaRecorder mimeType:', mimeType, 'Supported:', MediaRecorder.isTypeSupported(mimeType));
+        
         const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'audio/webm;codecs=opus',
+          mimeType: mimeType,
         });
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
@@ -164,12 +235,15 @@ export function RealtimeMicButton({
         const CHUNK_INTERVAL = 3000; // 3 sekundda bir marta yuborish
 
         let chunkCounter = 0;
-        mediaRecorder.ondataavailable = (event) => {
+        let lastMuxlisaSTTTime = 0;
+        const MUXLISA_STT_INTERVAL = 5000; // 5 sekundda bir marta Muxlisa STT'ga yuborish
+        
+        mediaRecorder.ondataavailable = async (event) => {
           if (event.data.size > 0) {
             audioChunksRef.current.push(event.data);
             chunkCounter++;
             
-            // Demo rejimda audio yubormaslik - faqat WebSocket ochiq bo'lsa
+            // WebSocket orqali backend'ga yuborish (agar ochiq bo'lsa)
             if (ws.readyState === WebSocket.OPEN) {
               const now = Date.now();
               // Chunk larni kamroq yuborish (3 sekundda bir marta)
@@ -193,8 +267,21 @@ export function RealtimeMicButton({
                 reader.readAsDataURL(event.data);
               }
             } else {
-              // Demo rejimda - audio yozishni davom ettirish, lekin yubormaslik
-              console.log('Demo mode: Recording audio but not sending');
+              // WebSocket ulanmagan yoki Web Speech API ishlamasa, Muxlisa STT'ga yuborish
+              const now = Date.now();
+              if (now - lastMuxlisaSTTTime > MUXLISA_STT_INTERVAL && !recognitionRef.current) {
+                lastMuxlisaSTTTime = now;
+                // Audio chunk'ni Muxlisa STT'ga yuborish
+                try {
+                  const result = await speechToText(event.data);
+                  if (result.text && result.text.trim()) {
+                    console.log('Muxlisa STT real-time result:', result.text);
+                    onTranscript(result.text.trim());
+                  }
+                } catch (err) {
+                  console.warn('Error sending audio to Muxlisa STT:', err);
+                }
+              }
             }
           }
         };
@@ -292,14 +379,35 @@ export function RealtimeMicButton({
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
+    
+    // MediaRecorder to'xtatish va audio'ni Muxlisa STT'ga yuborish
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
+      
+      // Audio chunk'larni birlashtirib, Muxlisa STT'ga yuborish
+      if (audioChunksRef.current.length > 0) {
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          console.log('Sending audio to Muxlisa STT, size:', audioBlob.size);
+          
+          const result = await speechToText(audioBlob);
+          if (result.text && result.text.trim()) {
+            console.log('Muxlisa STT result:', result.text);
+            onTranscript(result.text.trim());
+          }
+        } catch (err) {
+          console.error('Error sending audio to Muxlisa STT:', err);
+        }
+      }
+      
+      audioChunksRef.current = [];
     }
+    
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
