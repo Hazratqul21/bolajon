@@ -44,6 +44,7 @@ npm run dev
 - `docs/requirements.md` – asosiy funksional talablar
 - `docs/architecture.md` – komponentlar va oqimlar sxemasi
 - `docs/customization-guide.md` – backend/frontendni qo‘lda sozlash bo‘yicha qo‘llanma
+- `RENDER_DEPLOY.md` – Render’da FastAPI backend deploy qadamlar
 - `backend/alembic/` – migratsiyalar
 - `backend/app/db/seed.py` – boshlang‘ich kontent (harflar, matematika)
 
