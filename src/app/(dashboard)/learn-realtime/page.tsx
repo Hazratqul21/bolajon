@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { RealtimeMicButton } from '@/components/realtime/RealtimeMicButton';
 import { Card, CardContent } from '@/components/ui/card';
+import confetti from 'canvas-confetti';
+import { textToSpeech } from '@/lib/muxlisa-client';
 
 export default function LearnRealtimePage() {
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
@@ -11,6 +13,9 @@ export default function LearnRealtimePage() {
   const [exampleImages, setExampleImages] = useState<string[]>([]);
   const [childName, setChildName] = useState<string>('');
   const [showLibrary, setShowLibrary] = useState<boolean>(false);
+  const [letterProgress, setLetterProgress] = useState<number>(0); // Progress 0-100
+  const [learnedLetters, setLearnedLetters] = useState<Set<string>>(new Set());
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   
   // O'zbek alifbosi to'g'ri tartibi
   const allLetters = ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', 'Z', 'O\'', 'G\'', 'Sh', 'Ch', 'Ng'];
@@ -29,7 +34,32 @@ export default function LearnRealtimePage() {
     ]);
     setCurrentLetter('A');
     setExampleWords(['Anor', 'Archa', 'Avtobus']);
+    loadImagesForWords(['Anor', 'Archa', 'Avtobus']);
   }, []);
+  
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!currentLetter) return;
+      
+      if (e.key === 'ArrowLeft' && currentLetter !== 'A') {
+        const currentIndex = allLetters.indexOf(currentLetter);
+        const prevIndex = currentIndex === 0 ? allLetters.length - 1 : currentIndex - 1;
+        const prevLetter = allLetters[prevIndex];
+        handleLetterSelect(prevLetter);
+      } else if (e.key === 'ArrowRight' && currentLetter !== 'Ng') {
+        const currentIndex = allLetters.indexOf(currentLetter);
+        const nextIndex = (currentIndex + 1) % allLetters.length;
+        const nextLetter = allLetters[nextIndex];
+        handleLetterSelect(nextLetter);
+      } else if (e.key === 'Escape') {
+        setShowLibrary(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentLetter, allLetters]);
 
   const lastTranscriptRef = useRef<string>('');
   const lastTranscriptTimeRef = useRef<number>(0);
@@ -90,8 +120,16 @@ export default function LearnRealtimePage() {
         if (letter === "G'" && word.startsWith("g'")) return true;
         if (letter === "Sh" && word.startsWith("sh")) return true;
         if (letter === "Ch" && word.startsWith("ch")) return true;
-        // Ng harfi so'zning o'rtasida yoki oxirida bo'lishi mumkin
-        if (letter === "Ng" && (word.includes("ng") || word.includes("qo'ng") || word.includes("ming"))) return true;
+        // Ng harfi so'zning o'rtasida yoki oxirida bo'lishi mumkin, lekin boshlanishida emas
+        if (letter === "Ng") {
+          // Faqat misol so'zlardan birini to'liq aytgan bo'lsa
+          const ngExamples = ['ming', 'qo\'ng\'iroq', 'qo\'ng\'iz'];
+          if (ngExamples.some(ex => word === ex || word.startsWith(ex))) return true;
+          // So'zning o'rtasida yoki oxirida "ng" bo'lishi kerak, lekin boshlanishida emas
+          const ngIndex = word.indexOf('ng');
+          if (ngIndex > 0 && ngIndex < word.length - 2) return true; // O'rtasida
+          if (ngIndex === word.length - 2) return true; // Oxirida
+        }
         
         return false;
       });
@@ -99,6 +137,15 @@ export default function LearnRealtimePage() {
       let response = '';
       
       if (startsWithLetter) {
+        // To'g'ri! - Confetti animatsiyasi
+        triggerConfetti();
+        
+        // Progress yangilash
+        setLetterProgress(prev => Math.min(prev + 10, 100));
+        if (letterProgress >= 90) {
+          setLearnedLetters(prev => new Set([...prev, letter]));
+        }
+        
         // To'g'ri!
         response = `Ajoyib! 🎉 Siz "${text}" dedingiz. Bu ${letter} harfi bilan boshlanadi!`;
       } else {
@@ -119,8 +166,11 @@ export default function LearnRealtimePage() {
   
   const handleLetterSelect = (letter: string) => {
     setCurrentLetter(letter);
-    setExampleWords(getExampleWords(letter));
+    const words = getExampleWords(letter);
+    setExampleWords(words);
+    loadImagesForWords(words);
     setShowLibrary(false);
+    setLetterProgress(learnedLetters.has(letter) ? 100 : 0);
     setAiMessages((prev) => [
       ...prev,
       {
@@ -128,6 +178,109 @@ export default function LearnRealtimePage() {
         type: 'ai',
       },
     ]);
+    // Harfni ovozli aytish
+    speakLetter(letter);
+  };
+  
+  // Rasmlarni yuklash (Unsplash API yoki placeholder)
+  const loadImagesForWords = async (words: string[]) => {
+    const images: string[] = [];
+    for (const word of words) {
+      try {
+        // Unsplash API dan rasmlar olish (free tier)
+        // Eslatma: Unsplash API key .env.local faylida NEXT_PUBLIC_UNSPLASH_ACCESS_KEY sifatida saqlanishi kerak
+        const unsplashKey = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
+        if (unsplashKey) {
+          const response = await fetch(
+            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(word)}&per_page=1&client_id=${unsplashKey}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            if (data.results && data.results.length > 0) {
+              images.push(data.results[0].urls.small);
+            } else {
+              images.push(''); // Fallback
+            }
+          } else {
+            images.push(''); // Fallback
+          }
+        } else {
+          // Unsplash key bo'lmasa, placeholder ishlatish
+          images.push(`https://via.placeholder.com/300x200/3b82f6/ffffff?text=${encodeURIComponent(word)}`);
+        }
+      } catch (error) {
+        // Fallback: placeholder image
+        images.push(`https://via.placeholder.com/300x200/3b82f6/ffffff?text=${encodeURIComponent(word)}`);
+      }
+    }
+    setExampleImages(images);
+  };
+  
+  // Harfni ovozli aytish (TTS)
+  const speakLetter = async (letter: string) => {
+    if (isSpeaking) return;
+    setIsSpeaking(true);
+    
+    try {
+      const text = `Bu ${letter} harfi`;
+      const result = await textToSpeech(text);
+      
+      if (result.audio_url && result.audio_url !== 'web-speech-api') {
+        const audio = new Audio(result.audio_url);
+        audio.play().catch(err => console.warn('Audio play error:', err));
+      } else {
+        // Fallback: Web Speech API
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'uz-UZ';
+          utterance.rate = 0.9;
+          utterance.pitch = 1.1;
+          window.speechSynthesis.speak(utterance);
+        }
+      }
+    } catch (error) {
+      console.warn('TTS error:', error);
+    } finally {
+      setTimeout(() => setIsSpeaking(false), 2000);
+    }
+  };
+  
+  // Misol so'zni ovozli aytish
+  const speakWord = async (word: string) => {
+    if (isSpeaking) return;
+    setIsSpeaking(true);
+    
+    try {
+      const result = await textToSpeech(word);
+      
+      if (result.audio_url && result.audio_url !== 'web-speech-api') {
+        const audio = new Audio(result.audio_url);
+        audio.play().catch(err => console.warn('Audio play error:', err));
+      } else {
+        // Fallback: Web Speech API
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(word);
+          utterance.lang = 'uz-UZ';
+          utterance.rate = 0.9;
+          utterance.pitch = 1.1;
+          window.speechSynthesis.speak(utterance);
+        }
+      }
+    } catch (error) {
+      console.warn('TTS error:', error);
+    } finally {
+      setTimeout(() => setIsSpeaking(false), 2000);
+    }
+  };
+  
+  // Confetti animatsiyasi
+  const triggerConfetti = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b'],
+    });
   };
 
   const handleNextLetter = () => {
@@ -222,10 +375,29 @@ export default function LearnRealtimePage() {
               ))}
             </div>
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-gray-700 text-center">
+              <p className="text-sm text-gray-700 text-center mb-2">
                 💡 Hohlagan harfni tanlang va mashq qiling!
               </p>
+              <p className="text-xs text-gray-600 text-center">
+                ⌨️ Klaviatura: ← → harflar, Esc yopish
+              </p>
             </div>
+            
+            {/* O'rganilgan harflar */}
+            {learnedLetters.size > 0 && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-xs font-semibold text-green-800 text-center mb-2">
+                  ✅ O'rganilgan harflar: {learnedLetters.size}/{allLetters.length}
+                </p>
+                <div className="flex flex-wrap gap-1 justify-center">
+                  {Array.from(learnedLetters).map(letter => (
+                    <span key={letter} className="px-2 py-1 bg-green-200 text-green-800 rounded text-xs font-bold">
+                      {letter}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -235,24 +407,73 @@ export default function LearnRealtimePage() {
         {currentLetter && (
           <div className="container mx-auto px-4 py-8">
           <div className="text-center mb-8">
-            <div className="text-9xl font-bold text-blue-600 mb-4">{currentLetter}</div>
-            <p className="text-2xl text-gray-700">Bu {currentLetter} harfi</p>
+            <div className="text-9xl font-bold text-blue-600 mb-4 animate-bounce">{currentLetter}</div>
+            <p className="text-2xl text-gray-700 mb-4">Bu {currentLetter} harfi</p>
+            
+            {/* Progress Bar */}
+            <div className="max-w-md mx-auto mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-semibold text-gray-700">Progress</span>
+                <span className="text-sm font-semibold text-gray-700">{letterProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  className="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${letterProgress}%` }}
+                />
+              </div>
+            </div>
+            
+            {/* TTS Tugmasi */}
+            <button
+              onClick={() => speakLetter(currentLetter)}
+              disabled={isSpeaking}
+              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-semibold transition-colors flex items-center gap-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSpeaking ? (
+                <>
+                  <span className="animate-spin">⏳</span>
+                  <span>Ovoz berilmoqda...</span>
+                </>
+              ) : (
+                <>
+                  <span>🔊</span>
+                  <span>Qayta eshitish</span>
+                </>
+              )}
+            </button>
           </div>
 
           {/* So'zlar va rasmlar */}
           {exampleWords.length > 0 && (
             <div className="grid grid-cols-3 gap-4 mb-8">
               {exampleWords.map((word, idx) => (
-                <Card key={`${currentLetter}-${word}-${idx}`} className="text-center">
+                <Card key={`${currentLetter}-${word}-${idx}`} className="text-center hover:shadow-lg transition-shadow cursor-pointer" onClick={() => speakWord(word)}>
                   <CardContent className="p-4">
                     <div className="text-2xl font-bold mb-2">{word}</div>
-                    {exampleImages[idx] && (
+                    {exampleImages[idx] ? (
                       <img
                         src={exampleImages[idx]}
                         alt={word}
                         className="w-full h-32 object-cover rounded"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `https://via.placeholder.com/300x200?text=${word}`;
+                        }}
                       />
+                    ) : (
+                      <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded flex items-center justify-center">
+                        <span className="text-4xl">📷</span>
+                      </div>
                     )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        speakWord(word);
+                      }}
+                      className="mt-2 px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition-colors"
+                    >
+                      🔊 Eshitish
+                    </button>
                   </CardContent>
                 </Card>
               ))}
