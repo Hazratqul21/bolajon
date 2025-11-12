@@ -364,8 +364,8 @@ export default function LearnRealtimePage() {
     setIsSpeaking(true);
     
     try {
-      // O'zbek tilida to'g'ri matn
-      const text = `${letter} harfi`;
+      // O'zbek tilida to'g'ri matn - harfni o'zi
+      const text = letter;
       
       // Avval Muxlisa API dan urinib ko'rish
       const result = await textToSpeech(text, 'child_female');
@@ -402,37 +402,37 @@ export default function LearnRealtimePage() {
   
   // Harflar va so'zlar uchun o'zbek tilida to'g'ri talaffuz qilish uchun fonetik matnlar
   const getUzbekPhoneticText = (text: string): string => {
-    // Harflar uchun maxsus matnlar
+    // Harflar uchun maxsus matnlar - o'zbek tilida to'g'ri talaffuz qilish
     const letterPhonetics: Record<string, string> = {
-      'A': 'A harfi',
-      'B': 'Be harfi',
-      'D': 'De harfi',
-      'E': 'E harfi',
-      'F': 'Ef harfi',
-      'G': 'Ge harfi',
-      'H': 'Ha harfi',
-      'I': 'I harfi',
-      'J': 'Je harfi',
-      'K': 'Ka harfi',
-      'L': 'El harfi',
-      'M': 'Em harfi',
-      'N': 'En harfi',
-      'O': 'O harfi',
-      'P': 'Pe harfi',
-      'Q': 'Qe harfi',
-      'R': 'Er harfi',
-      'S': 'Es harfi',
-      'T': 'Te harfi',
-      'U': 'U harfi',
-      'V': 'Ve harfi',
-      'X': 'Xa harfi',
-      'Y': 'Ye harfi',
-      'Z': 'Ze harfi',
-      'O\'': 'O\' harfi',
-      'G\'': 'G\'e harfi',
-      'Sh': 'Sha harfi',
-      'Ch': 'Cha harfi',
-      'Ng': 'Nge harfi',
+      'A': 'A',
+      'B': 'Be',
+      'D': 'De',
+      'E': 'E',
+      'F': 'Ef',
+      'G': 'Ge',
+      'H': 'Ha',
+      'I': 'I',
+      'J': 'Je',
+      'K': 'Ka',
+      'L': 'El',
+      'M': 'Em',
+      'N': 'En',
+      'O': 'O',
+      'P': 'Pe',
+      'Q': 'Qe',
+      'R': 'Er',
+      'S': 'Es',
+      'T': 'Te',
+      'U': 'U',
+      'V': 'Ve',
+      'X': 'Xa',
+      'Y': 'Ye',
+      'Z': 'Ze',
+      'O\'': 'Oq',
+      'G\'': 'Ge',
+      'Sh': 'Sha',
+      'Ch': 'Cha',
+      'Ng': 'Nge',
     };
     
     // Agar text harf bo'lsa, fonetik matnni qaytarish
