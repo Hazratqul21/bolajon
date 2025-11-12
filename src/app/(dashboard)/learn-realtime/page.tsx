@@ -232,7 +232,7 @@ export default function LearnRealtimePage() {
           )}
 
           {/* Harf navigatsiya tugmalari */}
-          <div className="text-center flex gap-4 justify-center items-center">
+          <div className="text-center flex gap-4 justify-center items-center mb-24">
             {/* A harfida bo'lsa "Oldingi harf" tugmasini yashirish */}
             {currentLetter !== 'A' && (
               <button
@@ -252,21 +252,23 @@ export default function LearnRealtimePage() {
               </button>
             )}
           </div>
+
+          {/* Mikrofon tugmasi - tugmalardan pastda */}
+          <div className="flex justify-center items-center pb-8">
+            <RealtimeMicButton
+              onTranscript={handleTranscript}
+              onStart={() => {
+                // Mikrofon bosilganda harfni o'zgartirmaslik
+                // Faqat birinchi marta A harfini o'rnatish
+                if (!currentLetter) {
+                  setCurrentLetter('A');
+                  setExampleWords(['Anor', 'Archa', 'Avtobus']);
+                }
+              }}
+            />
+          </div>
         </div>
       )}
-
-      {/* Markazda dumaloq mikrofonga tugma */}
-      <RealtimeMicButton
-        onTranscript={handleTranscript}
-        onStart={() => {
-          // Mikrofon bosilganda harfni o'zgartirmaslik
-          // Faqat birinchi marta A harfini o'rnatish
-          if (!currentLetter) {
-            setCurrentLetter('A');
-            setExampleWords(['Anor', 'Archa', 'Avtobus']);
-          }
-        }}
-      />
     </div>
   );
 }
