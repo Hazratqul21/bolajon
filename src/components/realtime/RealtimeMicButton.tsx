@@ -317,19 +317,19 @@ export function RealtimeMicButton({
       <button
         onClick={handleClick}
         disabled={disabled || isConnecting}
-        className={`w-24 h-24 rounded-full ${
+        className={`w-16 h-16 rounded-full ${
           isRecording
             ? 'bg-red-500 animate-pulse scale-110'
             : 'bg-blue-500 hover:bg-blue-600 scale-100'
-        } transition-all duration-300 shadow-2xl flex items-center justify-center text-white text-3xl disabled:opacity-50 disabled:cursor-not-allowed`}
+        } transition-all duration-300 shadow-2xl flex items-center justify-center text-white text-2xl disabled:opacity-50 disabled:cursor-not-allowed`}
         style={{
           boxShadow: isRecording
-            ? '0 0 30px rgba(239, 68, 68, 0.6)'
-            : '0 0 15px rgba(59, 130, 246, 0.4)',
+            ? '0 0 20px rgba(239, 68, 68, 0.6)'
+            : '0 0 10px rgba(59, 130, 246, 0.4)',
         }}
       >
         {isConnecting ? (
-          <div className="animate-spin">⏳</div>
+          <div className="animate-spin text-lg">⏳</div>
         ) : isRecording ? (
           '🎤'
         ) : (

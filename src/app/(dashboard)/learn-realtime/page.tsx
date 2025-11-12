@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { RealtimeMicButton } from '@/components/realtime/RealtimeMicButton';
 import { Card, CardContent } from '@/components/ui/card';
 import confetti from 'canvas-confetti';
@@ -46,12 +46,34 @@ export default function LearnRealtimePage() {
         const currentIndex = allLetters.indexOf(currentLetter);
         const prevIndex = currentIndex === 0 ? allLetters.length - 1 : currentIndex - 1;
         const prevLetter = allLetters[prevIndex];
-        handleLetterSelect(prevLetter);
+        // Direct state update instead of calling handleLetterSelect
+        setCurrentLetter(prevLetter);
+        const words = getExampleWords(prevLetter);
+        setExampleWords(words);
+        loadImagesForWords(words);
+        setShowLibrary(false);
+        setLetterProgress(learnedLetters.has(prevLetter) ? 100 : 0);
+        setAiMessages((prev) => [
+          ...prev,
+          { text: `Endi ${prevLetter} harfini o'rganamiz!`, type: 'ai' },
+        ]);
+        speakLetter(prevLetter);
       } else if (e.key === 'ArrowRight' && currentLetter !== 'Ng') {
         const currentIndex = allLetters.indexOf(currentLetter);
         const nextIndex = (currentIndex + 1) % allLetters.length;
         const nextLetter = allLetters[nextIndex];
-        handleLetterSelect(nextLetter);
+        // Direct state update instead of calling handleLetterSelect
+        setCurrentLetter(nextLetter);
+        const words = getExampleWords(nextLetter);
+        setExampleWords(words);
+        loadImagesForWords(words);
+        setShowLibrary(false);
+        setLetterProgress(learnedLetters.has(nextLetter) ? 100 : 0);
+        setAiMessages((prev) => [
+          ...prev,
+          { text: `Endi ${nextLetter} harfini o'rganamiz!`, type: 'ai' },
+        ]);
+        speakLetter(nextLetter);
       } else if (e.key === 'Escape') {
         setShowLibrary(false);
       }
@@ -59,7 +81,7 @@ export default function LearnRealtimePage() {
     
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentLetter, allLetters]);
+  }, [currentLetter]);
 
   const lastTranscriptRef = useRef<string>('');
   const lastTranscriptTimeRef = useRef<number>(0);
@@ -182,35 +204,155 @@ export default function LearnRealtimePage() {
     speakLetter(letter);
   };
   
-  // Rasmlarni yuklash (Unsplash API yoki placeholder)
+  // Rasmlarni yuklash - har bir so'z uchun mos rasm
   const loadImagesForWords = async (words: string[]) => {
     const images: string[] = [];
+    
+    // Har bir so'z uchun mos rasm URL lari
+    const wordImageMap: Record<string, string> = {
+      // A harfi
+      'Anor': 'https://images.unsplash.com/photo-1619546813926-a78fa6372cd2?w=300&h=200&fit=crop',
+      'Archa': 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=300&h=200&fit=crop',
+      'Avtobus': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=300&h=200&fit=crop',
+      // B harfi
+      'Bola': 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=300&h=200&fit=crop',
+      'Bosh': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop',
+      'Bog\'': 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=300&h=200&fit=crop',
+      // D harfi
+      'Daraxt': 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=300&h=200&fit=crop',
+      'Dost': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=300&h=200&fit=crop',
+      'Dars': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300&h=200&fit=crop',
+      // E harfi
+      'Eshik': 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=200&fit=crop',
+      'Elak': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=200&fit=crop',
+      'Eshak': 'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=300&h=200&fit=crop',
+      // F harfi
+      'Futbol': 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=300&h=200&fit=crop',
+      'Fayl': 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=300&h=200&fit=crop',
+      'Fen': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop',
+      // G harfi
+      'Gul': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=300&h=200&fit=crop',
+      'Gap': 'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=300&h=200&fit=crop',
+      'G\'isht': 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=300&h=200&fit=crop',
+      // H harfi
+      'Havo': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=300&h=200&fit=crop',
+      'Hona': 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=300&h=200&fit=crop',
+      'Hovli': 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=300&h=200&fit=crop',
+      // I harfi
+      'Ish': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=300&h=200&fit=crop',
+      'It': 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=300&h=200&fit=crop',
+      'Ikki': 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=300&h=200&fit=crop',
+      // J harfi
+      'Javob': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=300&h=200&fit=crop',
+      'Juda': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop',
+      'Juma': 'https://images.unsplash.com/photo-1511988617509-a57c8a288659?w=300&h=200&fit=crop',
+      // K harfi
+      'Kitob': 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=200&fit=crop',
+      'Kuch': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&h=200&fit=crop',
+      'Kun': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop',
+      // L harfi
+      'Lola': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=300&h=200&fit=crop',
+      'Limon': 'https://images.unsplash.com/photo-1608610048043-9f98751d7afa?w=300&h=200&fit=crop',
+      'Lak': 'https://images.unsplash.com/photo-1586075010923-2dd4570d3381?w=300&h=200&fit=crop',
+      // M harfi
+      'Mashina': 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=300&h=200&fit=crop',
+      'Maktab': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300&h=200&fit=crop',
+      'Mushuk': 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=300&h=200&fit=crop',
+      // N harfi
+      'Non': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=300&h=200&fit=crop',
+      'Nar': 'https://images.unsplash.com/photo-1619546813926-a78fa6372cd2?w=300&h=200&fit=crop',
+      'Nima': 'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=300&h=200&fit=crop',
+      // O harfi
+      'Olma': 'https://images.unsplash.com/photo-1619546813926-a78fa6372cd2?w=300&h=200&fit=crop',
+      'O\'q': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300&h=200&fit=crop',
+      'O\'t': 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=300&h=200&fit=crop',
+      // P harfi
+      'Poy': 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=300&h=200&fit=crop',
+      'Pul': 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=300&h=200&fit=crop',
+      'Pichoq': 'https://images.unsplash.com/photo-1594736797933-d0cbc0a0c3e1?w=300&h=200&fit=crop',
+      // Q harfi
+      'Qalam': 'https://images.unsplash.com/photo-1583484963886-cfe2bff2945b?w=300&h=200&fit=crop',
+      'Qiz': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=200&fit=crop',
+      'Qush': 'https://images.unsplash.com/photo-1444464666168-49d633b86797?w=300&h=200&fit=crop',
+      // R harfi
+      'Rang': 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=300&h=200&fit=crop',
+      'Rasm': 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=300&h=200&fit=crop',
+      'Ruchka': 'https://images.unsplash.com/photo-1583484963886-cfe2bff2945b?w=300&h=200&fit=crop',
+      // S harfi
+      'Suv': 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=300&h=200&fit=crop',
+      'Sichqon': 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=300&h=200&fit=crop',
+      'Sut': 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=300&h=200&fit=crop',
+      // T harfi
+      'Tosh': 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=200&fit=crop',
+      'Tovuq': 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=300&h=200&fit=crop',
+      'Tuz': 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=300&h=200&fit=crop',
+      // U harfi
+      'Uy': 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=300&h=200&fit=crop',
+      'Uch': 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=300&h=200&fit=crop',
+      'Uzum': 'https://images.unsplash.com/photo-1606312619070-d48b4bdc8d91?w=300&h=200&fit=crop',
+      // V harfi
+      'Voy': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop',
+      'Vazifa': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=300&h=200&fit=crop',
+      'Vilka': 'https://images.unsplash.com/photo-1556910096-6f5e72db6803?w=300&h=200&fit=crop',
+      // X harfi
+      'Xona': 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=300&h=200&fit=crop',
+      'Xat': 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=200&fit=crop',
+      'Xalq': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=300&h=200&fit=crop',
+      // Y harfi
+      'Yoz': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop',
+      'Yil': 'https://images.unsplash.com/photo-1511988617509-a57c8a288659?w=300&h=200&fit=crop',
+      'Yuz': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop',
+      // Z harfi
+      'Zar': 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=300&h=200&fit=crop',
+      'Zamin': 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=300&h=200&fit=crop',
+      'Zarb': 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=300&h=200&fit=crop',
+      // O' harfi
+      'O\'g\'il': 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=300&h=200&fit=crop',
+      // G' harfi
+      'G\'oza': 'https://images.unsplash.com/photo-1606312619070-d48b4bdc8d91?w=300&h=200&fit=crop',
+      'G\'oyib': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=300&h=200&fit=crop',
+      // Sh harfi
+      'Shahar': 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=300&h=200&fit=crop',
+      'Shamol': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=300&h=200&fit=crop',
+      'Shox': 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=300&h=200&fit=crop',
+      // Ch harfi
+      'Choy': 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=300&h=200&fit=crop',
+      'Chiroq': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop',
+      'Chiqish': 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=200&fit=crop',
+      // Ng harfi
+      'Ming': 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=300&h=200&fit=crop',
+      'Qo\'ng\'iroq': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop',
+      'Qo\'ng\'iz': 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=300&h=200&fit=crop',
+    };
+    
     for (const word of words) {
-      try {
-        // Unsplash API dan rasmlar olish (free tier)
-        // Eslatma: Unsplash API key .env.local faylida NEXT_PUBLIC_UNSPLASH_ACCESS_KEY sifatida saqlanishi kerak
-        const unsplashKey = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
-        if (unsplashKey) {
-          const response = await fetch(
-            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(word)}&per_page=1&client_id=${unsplashKey}`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            if (data.results && data.results.length > 0) {
-              images.push(data.results[0].urls.small);
+      // Avval wordImageMap dan qidirish
+      if (wordImageMap[word]) {
+        images.push(wordImageMap[word]);
+      } else {
+        // Agar topilmasa, Unsplash API dan qidirish
+        try {
+          const unsplashKey = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
+          if (unsplashKey) {
+            const response = await fetch(
+              `https://api.unsplash.com/search/photos?query=${encodeURIComponent(word)}&per_page=1&client_id=${unsplashKey}`
+            );
+            if (response.ok) {
+              const data = await response.json();
+              if (data.results && data.results.length > 0) {
+                images.push(data.results[0].urls.small);
+              } else {
+                images.push(`https://via.placeholder.com/300x200/3b82f6/ffffff?text=${encodeURIComponent(word)}`);
+              }
             } else {
-              images.push(''); // Fallback
+              images.push(`https://via.placeholder.com/300x200/3b82f6/ffffff?text=${encodeURIComponent(word)}`);
             }
           } else {
-            images.push(''); // Fallback
+            images.push(`https://via.placeholder.com/300x200/3b82f6/ffffff?text=${encodeURIComponent(word)}`);
           }
-        } else {
-          // Unsplash key bo'lmasa, placeholder ishlatish
+        } catch (error) {
           images.push(`https://via.placeholder.com/300x200/3b82f6/ffffff?text=${encodeURIComponent(word)}`);
         }
-      } catch (error) {
-        // Fallback: placeholder image
-        images.push(`https://via.placeholder.com/300x200/3b82f6/ffffff?text=${encodeURIComponent(word)}`);
       }
     }
     setExampleImages(images);
@@ -232,9 +374,11 @@ export default function LearnRealtimePage() {
         // Fallback: Web Speech API
         if ('speechSynthesis' in window) {
           const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = 'uz-UZ';
-          utterance.rate = 0.9;
-          utterance.pitch = 1.1;
+          // O'zbek tili uchun to'g'ri lang code
+          utterance.lang = 'uz';
+          utterance.rate = 0.8;
+          utterance.pitch = 1.0;
+          utterance.volume = 1.0;
           window.speechSynthesis.speak(utterance);
         }
       }
