@@ -1,5 +1,5 @@
-from . import admin, health, lessons, math, progress, sessions
+from . import admin, auth, health, lessons, math, progress, realtime, sessions
 
-__all__ = ["admin", "health", "lessons", "math", "progress", "sessions"]
+__all__ = ["admin", "auth", "health", "lessons", "math", "progress", "realtime", "sessions"]
 
 

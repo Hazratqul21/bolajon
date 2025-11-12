@@ -10,312 +10,267 @@ export interface Letter {
   words: Word[];
 }
 
+// Lotin alifbosi - barcha harflar lotin yozuvida
 export const UZBEK_ALPHABET: Letter[] = [
   {
-    letter: 'А',
-    name: 'а',
+    letter: 'A',
+    name: 'a',
     words: [
-      { word: 'ota', translation: 'отец', difficulty: 1 },
-      { word: 'ana', translation: 'мать', difficulty: 1 },
-      { word: 'archa', translation: 'ёлка', difficulty: 2 }
+      { word: 'Anor', translation: 'гранат', difficulty: 1 },
+      { word: 'Archa', translation: 'ёлка', difficulty: 2 },
+      { word: 'Avtobus', translation: 'автобус', difficulty: 2 }
     ]
   },
   {
-    letter: 'Б',
-    name: 'бэ',
+    letter: 'B',
+    name: 'be',
     words: [
-      { word: 'bola', translation: 'ребенок', difficulty: 1 },
-      { word: 'bosh', translation: 'голова', difficulty: 1 },
-      { word: 'bog', translation: 'сад', difficulty: 1 }
+      { word: 'Bola', translation: 'ребенок', difficulty: 1 },
+      { word: 'Bosh', translation: 'голова', difficulty: 1 },
+      { word: 'Bog', translation: 'сад', difficulty: 1 }
     ]
   },
   {
-    letter: 'В',
-    name: 'вэ',
+    letter: 'D',
+    name: 'de',
     words: [
-      { word: 'vatan', translation: 'родина', difficulty: 2 },
-      { word: 'voda', translation: 'вода', difficulty: 1 },
-      { word: 'vazifa', translation: 'задание', difficulty: 2 }
+      { word: 'Daraxt', translation: 'дерево', difficulty: 2 },
+      { word: 'Dost', translation: 'друг', difficulty: 1 },
+      { word: 'Dars', translation: 'урок', difficulty: 1 }
     ]
   },
   {
-    letter: 'Г',
-    name: 'гэ',
+    letter: 'E',
+    name: 'e',
     words: [
-      { word: 'gul', translation: 'цветок', difficulty: 1 },
-      { word: 'gapir', translation: 'говори', difficulty: 2 },
-      { word: 'gazeta', translation: 'газета', difficulty: 2 }
+      { word: 'El', translation: 'страна', difficulty: 1 },
+      { word: 'Eshik', translation: 'дверь', difficulty: 2 },
+      { word: 'Ertak', translation: 'сказка', difficulty: 2 }
     ]
   },
   {
-    letter: 'Д',
-    name: 'дэ',
+    letter: 'F',
+    name: 'fe',
     words: [
-      { word: 'daraxt', translation: 'дерево', difficulty: 2 },
-      { word: 'dost', translation: 'друг', difficulty: 1 },
-      { word: 'dars', translation: 'урок', difficulty: 1 }
+      { word: 'Fayl', translation: 'файл', difficulty: 1 },
+      { word: 'Futbol', translation: 'футбол', difficulty: 2 },
+      { word: 'Film', translation: 'фильм', difficulty: 1 }
     ]
   },
   {
-    letter: 'Е',
-    name: 'е',
+    letter: 'G',
+    name: 'ge',
     words: [
-      { word: 'el', translation: 'страна', difficulty: 1 },
-      { word: 'eshik', translation: 'дверь', difficulty: 2 },
-      { word: 'ertak', translation: 'сказка', difficulty: 2 }
+      { word: 'Gul', translation: 'цветок', difficulty: 1 },
+      { word: 'Gapir', translation: 'говори', difficulty: 2 },
+      { word: 'Gazeta', translation: 'газета', difficulty: 2 }
     ]
   },
   {
-    letter: 'Ё',
-    name: 'ё',
+    letter: 'H',
+    name: 'he',
     words: [
-      { word: 'yoz', translation: 'лето', difficulty: 1 },
-      { word: 'yol', translation: 'дорога', difficulty: 1 },
-      { word: 'yosh', translation: 'молодой', difficulty: 1 }
+      { word: 'Hayvon', translation: 'животное', difficulty: 2 },
+      { word: 'Hajm', translation: 'объём', difficulty: 1 },
+      { word: 'Hokim', translation: 'правитель', difficulty: 2 }
     ]
   },
   {
-    letter: 'Ж',
-    name: 'жэ',
+    letter: 'I',
+    name: 'i',
     words: [
-      { word: 'juma', translation: 'пятница', difficulty: 2 },
-      { word: 'jon', translation: 'душа', difficulty: 1 },
-      { word: 'jild', translation: 'том', difficulty: 1 }
+      { word: 'Ish', translation: 'работа', difficulty: 1 },
+      { word: 'Ilhom', translation: 'вдохновение', difficulty: 2 },
+      { word: 'Imtihon', translation: 'экзамен', difficulty: 2 }
     ]
   },
   {
-    letter: 'З',
-    name: 'зэ',
+    letter: 'J',
+    name: 'je',
     words: [
-      { word: 'zamin', translation: 'земля', difficulty: 2 },
-      { word: 'zil', translation: 'колокол', difficulty: 1 },
-      { word: 'zavod', translation: 'завод', difficulty: 2 }
+      { word: 'Juma', translation: 'пятница', difficulty: 2 },
+      { word: 'Jon', translation: 'душа', difficulty: 1 },
+      { word: 'Jild', translation: 'том', difficulty: 1 }
     ]
   },
   {
-    letter: 'И',
-    name: 'и',
+    letter: 'K',
+    name: 'ke',
     words: [
-      { word: 'ish', translation: 'работа', difficulty: 1 },
-      { word: 'ilhom', translation: 'вдохновение', difficulty: 2 },
-      { word: 'imtihon', translation: 'экзамен', difficulty: 2 }
+      { word: 'Kitob', translation: 'книга', difficulty: 2 },
+      { word: 'Ko\'z', translation: 'глаз', difficulty: 1 },
+      { word: 'Kuch', translation: 'сила', difficulty: 1 }
     ]
   },
   {
-    letter: 'Й',
-    name: 'й',
+    letter: 'L',
+    name: 'le',
     words: [
-      { word: 'yoz', translation: 'лето', difficulty: 1 },
-      { word: 'yol', translation: 'дорога', difficulty: 1 },
-      { word: 'yosh', translation: 'молодой', difficulty: 1 }
+      { word: 'Lola', translation: 'тюльпан', difficulty: 2 },
+      { word: 'Limon', translation: 'лимон', difficulty: 1 },
+      { word: 'Lampa', translation: 'лампа', difficulty: 2 }
     ]
   },
   {
-    letter: 'К',
-    name: 'кэ',
+    letter: 'M',
+    name: 'me',
     words: [
-      { word: 'kitob', translation: 'книга', difficulty: 2 },
-      { word: 'ko\'z', translation: 'глаз', difficulty: 1 },
-      { word: 'kuch', translation: 'сила', difficulty: 1 }
+      { word: 'Maktab', translation: 'школа', difficulty: 2 },
+      { word: 'Mashina', translation: 'машина', difficulty: 2 },
+      { word: 'Meva', translation: 'фрукт', difficulty: 2 }
     ]
   },
   {
-    letter: 'Л',
-    name: 'лэ',
+    letter: 'N',
+    name: 'ne',
     words: [
-      { word: 'loviya', translation: 'фасоль', difficulty: 2 },
-      { word: 'lab', translation: 'губа', difficulty: 1 },
-      { word: 'loy', translation: 'глина', difficulty: 1 }
+      { word: 'Nur', translation: 'свет', difficulty: 1 },
+      { word: 'Non', translation: 'хлеб', difficulty: 1 },
+      { word: 'Nima', translation: 'что', difficulty: 1 }
     ]
   },
   {
-    letter: 'М',
-    name: 'мэ',
+    letter: 'O',
+    name: 'o',
     words: [
-      { word: 'maktab', translation: 'школа', difficulty: 2 },
-      { word: 'mashina', translation: 'машина', difficulty: 2 },
-      { word: 'meva', translation: 'фрукт', difficulty: 2 }
+      { word: 'Ona', translation: 'мать', difficulty: 1 },
+      { word: 'Olma', translation: 'яблоко', difficulty: 2 },
+      { word: 'Oyi', translation: 'месяц', difficulty: 1 }
     ]
   },
   {
-    letter: 'Н',
-    name: 'нэ',
+    letter: 'P',
+    name: 'pe',
     words: [
-      { word: 'nur', translation: 'свет', difficulty: 1 },
-      { word: 'non', translation: 'хлеб', difficulty: 1 },
-      { word: 'nima', translation: 'что', difficulty: 1 }
+      { word: 'Poytaxt', translation: 'столица', difficulty: 2 },
+      { word: 'Pul', translation: 'деньги', difficulty: 1 },
+      { word: 'Piyola', translation: 'чашка', difficulty: 2 }
     ]
   },
   {
-    letter: 'О',
-    name: 'о',
+    letter: 'Q',
+    name: 'qe',
     words: [
-      { word: 'ota', translation: 'отец', difficulty: 1 },
-      { word: 'ona', translation: 'мать', difficulty: 1 },
-      { word: 'olma', translation: 'яблоко', difficulty: 2 }
+      { word: 'Qalam', translation: 'ручка', difficulty: 2 },
+      { word: 'Qiz', translation: 'девочка', difficulty: 1 },
+      { word: 'Qush', translation: 'птица', difficulty: 1 }
     ]
   },
   {
-    letter: 'П',
-    name: 'пэ',
+    letter: 'R',
+    name: 're',
     words: [
-      { word: 'poytaxt', translation: 'столица', difficulty: 2 },
-      { word: 'pul', translation: 'деньги', difficulty: 1 },
-      { word: 'piyola', translation: 'чашка', difficulty: 2 }
+      { word: 'Rasm', translation: 'рисунок', difficulty: 1 },
+      { word: 'Rang', translation: 'цвет', difficulty: 1 },
+      { word: 'Ruchka', translation: 'ручка', difficulty: 2 }
     ]
   },
   {
-    letter: 'Р',
-    name: 'рэ',
+    letter: 'S',
+    name: 'se',
     words: [
-      { word: 'rasm', translation: 'рисунок', difficulty: 1 },
-      { word: 'ro\'za', translation: 'пост', difficulty: 2 },
-      { word: 'rang', translation: 'цвет', difficulty: 1 }
+      { word: 'Sabzi', translation: 'морковь', difficulty: 2 },
+      { word: 'Soat', translation: 'час', difficulty: 1 },
+      { word: 'Suv', translation: 'вода', difficulty: 1 }
     ]
   },
   {
-    letter: 'С',
-    name: 'сэ',
+    letter: 'T',
+    name: 'te',
     words: [
-      { word: 'sabzi', translation: 'морковь', difficulty: 2 },
-      { word: 'soat', translation: 'час', difficulty: 1 },
-      { word: 'suv', translation: 'вода', difficulty: 1 }
+      { word: 'Tosh', translation: 'камень', difficulty: 1 },
+      { word: 'Til', translation: 'язык', difficulty: 1 },
+      { word: 'Tom', translation: 'крыша', difficulty: 1 }
     ]
   },
   {
-    letter: 'Т',
-    name: 'тэ',
+    letter: 'U',
+    name: 'u',
     words: [
-      { word: 'tosh', translation: 'камень', difficulty: 1 },
-      { word: 'til', translation: 'язык', difficulty: 1 },
-      { word: 'tom', translation: 'крыша', difficulty: 1 }
+      { word: 'Uy', translation: 'дом', difficulty: 1 },
+      { word: 'Ustoz', translation: 'учитель', difficulty: 2 },
+      { word: 'Uzoq', translation: 'далеко', difficulty: 2 }
     ]
   },
   {
-    letter: 'У',
-    name: 'у',
+    letter: 'V',
+    name: 've',
     words: [
-      { word: 'uy', translation: 'дом', difficulty: 1 },
-      { word: 'ustoz', translation: 'учитель', difficulty: 2 },
-      { word: 'uzoq', translation: 'далеко', difficulty: 2 }
+      { word: 'Vatan', translation: 'родина', difficulty: 2 },
+      { word: 'Voda', translation: 'вода', difficulty: 1 },
+      { word: 'Vazifa', translation: 'задание', difficulty: 2 }
     ]
   },
   {
-    letter: 'Ф',
-    name: 'фэ',
+    letter: 'X',
+    name: 'xe',
     words: [
-      { word: 'fayl', translation: 'файл', difficulty: 1 },
-      { word: 'futbol', translation: 'футбол', difficulty: 2 },
-      { word: 'film', translation: 'фильм', difficulty: 1 }
+      { word: 'Xona', translation: 'комната', difficulty: 2 },
+      { word: 'Xat', translation: 'письмо', difficulty: 1 },
+      { word: 'Xayr', translation: 'до свидания', difficulty: 1 }
     ]
   },
   {
-    letter: 'Х',
-    name: 'хэ',
+    letter: 'Y',
+    name: 'ye',
     words: [
-      { word: 'xona', translation: 'комната', difficulty: 2 },
-      { word: 'xat', translation: 'письмо', difficulty: 1 },
-      { word: 'xayr', translation: 'до свидания', difficulty: 1 }
+      { word: 'Yoz', translation: 'лето', difficulty: 1 },
+      { word: 'Yol', translation: 'дорога', difficulty: 1 },
+      { word: 'Yosh', translation: 'молодой', difficulty: 1 }
     ]
   },
   {
-    letter: 'Ц',
-    name: 'цэ',
+    letter: 'Z',
+    name: 'ze',
     words: [
-      { word: 'tsirk', translation: 'цирк', difficulty: 1 },
-      { word: 'tsifr', translation: 'цифра', difficulty: 2 },
-      { word: 'tsement', translation: 'цемент', difficulty: 2 }
+      { word: 'Zamin', translation: 'земля', difficulty: 2 },
+      { word: 'Zil', translation: 'колокол', difficulty: 1 },
+      { word: 'Zavod', translation: 'завод', difficulty: 2 }
     ]
   },
   {
-    letter: 'Ч',
-    name: 'чэ',
+    letter: 'O\'',
+    name: 'o\'',
     words: [
-      { word: 'choy', translation: 'чай', difficulty: 1 },
-      { word: 'chiroq', translation: 'лампа', difficulty: 2 },
-      { word: 'chashka', translation: 'чашка', difficulty: 2 }
+      { word: 'O\'q', translation: 'стрела', difficulty: 1 },
+      { word: 'O\'t', translation: 'трава', difficulty: 1 },
+      { word: 'O\'g\'il', translation: 'сын', difficulty: 2 }
     ]
   },
   {
-    letter: 'Ш',
-    name: 'шэ',
+    letter: 'G\'',
+    name: 'g\'',
     words: [
-      { word: 'shahar', translation: 'город', difficulty: 2 },
-      { word: 'shamol', translation: 'ветер', difficulty: 2 },
-      { word: 'shaxmat', translation: 'шахматы', difficulty: 2 }
+      { word: 'G\'isht', translation: 'кирпич', difficulty: 2 },
+      { word: 'G\'oza', translation: 'хлопок', difficulty: 2 },
+      { word: 'G\'alaba', translation: 'победа', difficulty: 2 }
     ]
   },
   {
-    letter: 'Ъ',
-    name: 'твёрдый знак',
+    letter: 'Sh',
+    name: 'she',
     words: [
-      { word: 'o\'t', translation: 'трава', difficulty: 1 },
-      { word: 'o\'qituvchi', translation: 'учитель', difficulty: 3 },
-      { word: 'o\'zbek', translation: 'узбек', difficulty: 2 }
+      { word: 'Shahar', translation: 'город', difficulty: 2 },
+      { word: 'Shamol', translation: 'ветер', difficulty: 2 },
+      { word: 'Shaxmat', translation: 'шахматы', difficulty: 2 }
     ]
   },
   {
-    letter: 'Э',
-    name: 'э',
+    letter: 'Ch',
+    name: 'che',
     words: [
-      { word: 'eshik', translation: 'дверь', difficulty: 2 },
-      { word: 'ertak', translation: 'сказка', difficulty: 2 },
-      { word: 'ekran', translation: 'экран', difficulty: 2 }
+      { word: 'Choy', translation: 'чай', difficulty: 1 },
+      { word: 'Chiroq', translation: 'лампа', difficulty: 2 },
+      { word: 'Chashka', translation: 'чашка', difficulty: 2 }
     ]
   },
   {
-    letter: 'Ю',
-    name: 'ю',
+    letter: 'Ng',
+    name: 'nge',
     words: [
-      { word: 'yulduz', translation: 'звезда', difficulty: 2 },
-      { word: 'yurak', translation: 'сердце', difficulty: 2 },
-      { word: 'yumshoq', translation: 'мягкий', difficulty: 2 }
-    ]
-  },
-  {
-    letter: 'Я',
-    name: 'я',
-    words: [
-      { word: 'yashil', translation: 'зелёный', difficulty: 2 },
-      { word: 'yangi', translation: 'новый', difficulty: 2 },
-      { word: 'yaxshi', translation: 'хороший', difficulty: 2 }
-    ]
-  },
-  {
-    letter: 'Ў',
-    name: 'ў',
-    words: [
-      { word: 'o\'q', translation: 'стрела', difficulty: 1 },
-      { word: 'o\'t', translation: 'трава', difficulty: 1 },
-      { word: 'o\'g\'il', translation: 'сын', difficulty: 2 }
-    ]
-  },
-  {
-    letter: 'Қ',
-    name: 'қэ',
-    words: [
-      { word: 'qalam', translation: 'ручка', difficulty: 2 },
-      { word: 'qiz', translation: 'девочка', difficulty: 1 },
-      { word: 'qush', translation: 'птица', difficulty: 1 }
-    ]
-  },
-  {
-    letter: 'Ғ',
-    name: 'ғэ',
-    words: [
-      { word: 'g\'isht', translation: 'кирпич', difficulty: 2 },
-      { word: 'g\'oza', translation: 'хлопок', difficulty: 2 },
-      { word: 'g\'alaba', translation: 'победа', difficulty: 2 }
-    ]
-  },
-  {
-    letter: 'Ҳ',
-    name: 'ҳэ',
-    words: [
-      { word: 'hayvon', translation: 'животное', difficulty: 2 },
-      { word: 'hajm', translation: 'объём', difficulty: 1 },
-      { word: 'hokim', translation: 'правитель', difficulty: 2 }
+      { word: 'Ming', translation: 'тысяча', difficulty: 2 },
+      { word: 'Ting', translation: 'слушай', difficulty: 1 },
+      { word: 'Qo\'ng\'iroq', translation: 'колокол', difficulty: 3 }
     ]
   }
 ];
-

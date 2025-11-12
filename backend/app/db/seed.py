@@ -59,6 +59,19 @@ ALPHABET_LESSONS = [
             "https://cdn.example.com/images/alphabet/baliq.png",
         ],
     },
+    {
+        "key": "letter-d",
+        "title": "D harfi bilan tanishamiz",
+        "description": "D harfi va uning tovushi. Lotin alifbosi.",
+        "target_letter": "D",
+        "target_sound": "d",
+        "example_words": ["Daraxt", "Dost", "Dars"],
+        "example_image_urls": [
+            "https://cdn.example.com/images/alphabet/daraxt.png",
+            "https://cdn.example.com/images/alphabet/dost.png",
+            "https://cdn.example.com/images/alphabet/dars.png",
+        ],
+    },
 ]
 
 ALPHABET_PROMPTS = [
