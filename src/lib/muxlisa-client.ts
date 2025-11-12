@@ -194,19 +194,24 @@ async function webSpeechToText(audioBlob: Blob): Promise<STTResponse> {
       return;
     }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      resolve({ transcript: '', error: 'Speech recognition not available' });
+      return;
+    }
+
     const recognition = new SpeechRecognition();
     
     recognition.lang = 'uz-UZ';
     recognition.continuous = false;
     recognition.interimResults = false;
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0][0].transcript;
       resolve({ transcript, confidence: event.results[0][0].confidence });
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       resolve({ transcript: '', error: event.error });
     };
 

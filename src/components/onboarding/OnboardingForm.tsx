@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface OnboardingFormProps {
-  onComplete: (data: { firstName: string; age: number; preferences?: any }) => void;
+  onComplete: (data: { firstName: string; age: number; preferences?: string[] }) => void;
 }
 
 export function OnboardingForm({ onComplete }: OnboardingFormProps) {
   const [step, setStep] = useState(1);
   const [firstName, setFirstName] = useState('');
   const [age, setAge] = useState<number | ''>('');
-  const [preferences, setPreferences] = useState<any>({});
+  const [preferences, setPreferences] = useState<string[]>([]);
 
   const handleNext = (e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -68,24 +68,29 @@ export function OnboardingForm({ onComplete }: OnboardingFormProps) {
                 Qanday narsalar sizga yoqadi? (Ixtiyoriy)
               </p>
               <div className="grid grid-cols-2 gap-2">
-                {['Hayvonlar', 'Mashinalar', 'Ranglar', 'Musiqa', 'Kitoblar', 'O\'yinlar'].map((item) => (
-                  <button
-                    key={item}
-                    onClick={() =>
-                      setPreferences((prev: any) => ({
-                        ...prev,
-                        [item]: !prev[item],
-                      }))
-                    }
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      preferences[item]
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-white border-gray-200 hover:border-blue-300'
-                    }`}
-                  >
-                    {item}
-                  </button>
-                ))}
+                {['Hayvonlar', 'Mashinalar', 'Ranglar', 'Musiqa', 'Kitoblar', 'O\'yinlar'].map((item) => {
+                  const isSelected = preferences.includes(item);
+                  return (
+                    <button
+                      key={item}
+                      onClick={() => {
+                        setPreferences((prev: string[]) => {
+                          if (prev.includes(item)) {
+                            return prev.filter((p) => p !== item);
+                          }
+                          return [...prev, item];
+                        });
+                      }}
+                      className={`p-3 rounded-lg border-2 transition-all ${
+                        isSelected
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : 'bg-white border-gray-200 hover:border-blue-300'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

@@ -23,7 +23,7 @@ export function RealtimeMicButton({
   const audioChunksRef = useRef<Blob[]>([]);
   const lastMessageRef = useRef<string>('');
   const messageCountRef = useRef<number>(0);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
@@ -53,14 +53,19 @@ export function RealtimeMicButton({
       
       // Web Speech API (STT) - real-time transcription
       if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          console.warn('SpeechRecognition not available');
+          return;
+        }
+
         const recognition = new SpeechRecognition();
         
         recognition.lang = 'uz-UZ';
         recognition.continuous = true;
         recognition.interimResults = true;
         
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
           let interimTranscript = '';
           let finalTranscript = '';
           
@@ -80,7 +85,7 @@ export function RealtimeMicButton({
           }
         };
         
-        recognition.onerror = (event: any) => {
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
           console.error('Speech recognition error:', event.error);
         };
         
@@ -268,15 +273,19 @@ export function RealtimeMicButton({
         setIsConnecting(false);
         setIsRecording(false);
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error starting recording:', error);
       setIsConnecting(false);
       
       // Mikrofon permissions xatosi
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        alert('Mikrofon ruxsati kerak. Iltimos, browser sozlamalaridan mikrofon ruxsatini bering.');
-      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-        alert('Mikrofon topilmadi. Iltimos, mikrofon ulanganligini tekshiring.');
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          alert('Mikrofon ruxsati kerak. Iltimos, browser sozlamalaridan mikrofon ruxsatini bering.');
+        } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+          alert('Mikrofon topilmadi. Iltimos, mikrofon ulanganligini tekshiring.');
+        } else {
+          console.warn('Recording error, demo rejimda davom etamiz');
+        }
       } else {
         console.warn('Recording error, demo rejimda davom etamiz');
       }

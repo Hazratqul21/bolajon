@@ -14,7 +14,13 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleOnboardingComplete = async (data: { firstName: string; age: number; preferences?: any }) => {
+  interface OnboardingData {
+    firstName: string;
+    age: number;
+    preferences?: string[];
+  }
+
+  const handleOnboardingComplete = async (data: OnboardingData) => {
     setIsLoading(true);
     setError(null);
 
