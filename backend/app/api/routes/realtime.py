@@ -44,7 +44,7 @@ realtime_manager = RealtimeConversationManager()
 async def realtime_conversation(
     websocket: WebSocket,
     session_id: UUID,
-    user_id: UUID = Query(...),
+    user_id: UUID | None = Query(None),
     lesson_id: UUID | None = Query(None),
 ) -> None:
     """Real-time AI suhbat - ChatGPT Realtime kabi"""

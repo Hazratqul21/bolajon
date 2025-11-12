@@ -35,14 +35,22 @@ export function RealtimeMicButton({
   const startRecording = async () => {
     try {
       setIsConnecting(true);
+      
+      // Mikrofon permissions
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // WebSocket ga ulanish (backend realtime endpoint)
+      // User ID ni localStorage dan olish yoki default
+      const childId = localStorage.getItem('bolajon_child_id') || '00000000-0000-0000-0000-000000000000';
       const sessionId = crypto.randomUUID();
-      const ws = new WebSocket(`ws://localhost:8000/api/realtime/conversation/${sessionId}?user_id=...&lesson_id=...`);
+      
+      // WebSocket ga ulanish (backend realtime endpoint)
+      const wsUrl = `ws://localhost:8000/api/realtime/conversation/${sessionId}?user_id=${childId}`;
+      console.log('WebSocket connecting to:', wsUrl);
+      const ws = new WebSocket(wsUrl);
       websocketRef.current = ws;
 
       ws.onopen = () => {
+        console.log('WebSocket connected successfully');
         setIsConnecting(false);
         setIsRecording(true);
         onStart?.();
@@ -55,18 +63,22 @@ export function RealtimeMicButton({
         audioChunksRef.current = [];
 
         mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
+          if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
             audioChunksRef.current.push(event.data);
             // Real-time audio chunk yuborish
             const reader = new FileReader();
             reader.onloadend = () => {
               const base64Audio = reader.result as string;
-              ws.send(
-                JSON.stringify({
-                  type: 'audio_chunk',
-                  audio_base64: base64Audio.split(',')[1],
-                })
-              );
+              try {
+                ws.send(
+                  JSON.stringify({
+                    type: 'audio_chunk',
+                    audio_base64: base64Audio.split(',')[1],
+                  })
+                );
+              } catch (err) {
+                console.warn('Error sending audio chunk:', err);
+              }
             };
             reader.readAsDataURL(event.data);
           }
@@ -76,19 +88,57 @@ export function RealtimeMicButton({
           stream.getTracks().forEach((track) => track.stop());
         };
 
-        mediaRecorder.start(100); // Har 100ms da chunk yuborish
+        // Demo rejimda ham ishlash uchun - audio yozishni boshlash
+        try {
+          mediaRecorder.start(1000); // Har 1 sekundda chunk yuborish
+          console.log('MediaRecorder started');
+        } catch (err) {
+          console.warn('MediaRecorder start error:', err);
+        }
       };
+      
+      // WebSocket ulanmasa ham demo rejimda ishlash
+      setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN && !isRecording) {
+          console.warn('WebSocket timeout, using demo mode');
+          setIsConnecting(false);
+          setIsRecording(true);
+          onStart?.();
+          
+          // Demo rejimda audio yozish
+          try {
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            mediaRecorder.ondataavailable = () => {
+              // Demo rejimda hech narsa yubormaymiz
+            };
+            mediaRecorder.start(1000);
+          } catch (err) {
+            console.warn('Demo mode MediaRecorder error:', err);
+          }
+        }
+      }, 3000); // 3 sekunddan keyin demo rejimga o'tish
 
       ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'ai_message') {
-          // AI javobini ko'rsatish
-          console.log('AI Response:', data.text);
-          // TTS audio play qilish
-          if (data.audio_url) {
-            const audio = new Audio(data.audio_url);
-            audio.play();
+        try {
+          const data = JSON.parse(event.data);
+          console.log('WebSocket message received:', data);
+          
+          if (data.type === 'ai_message') {
+            // AI javobini ko'rsatish
+            console.log('AI Response:', data.text);
+            // Transcript callback chaqirish
+            if (data.text) {
+              onTranscript(data.text);
+            }
+            // TTS audio play qilish
+            if (data.audio_url) {
+              const audio = new Audio(data.audio_url);
+              audio.play().catch(err => console.warn('Audio play error:', err));
+            }
           }
+        } catch (err) {
+          console.error('Error parsing WebSocket message:', err);
         }
       };
 
@@ -96,10 +146,27 @@ export function RealtimeMicButton({
         console.error('WebSocket error:', error);
         setIsConnecting(false);
         setIsRecording(false);
+        // Demo rejimda ham ishlash uchun
+        console.warn('WebSocket ulanmadi, demo rejimda davom etamiz');
       };
-    } catch (error) {
+      
+      ws.onclose = (event) => {
+        console.log('WebSocket closed:', event.code, event.reason);
+        setIsConnecting(false);
+        setIsRecording(false);
+      };
+    } catch (error: any) {
       console.error('Error starting recording:', error);
       setIsConnecting(false);
+      
+      // Mikrofon permissions xatosi
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        alert('Mikrofon ruxsati kerak. Iltimos, browser sozlamalaridan mikrofon ruxsatini bering.');
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        alert('Mikrofon topilmadi. Iltimos, mikrofon ulanganligini tekshiring.');
+      } else {
+        console.warn('Recording error, demo rejimda davom etamiz');
+      }
     }
   };
 

@@ -28,17 +28,53 @@ export default function LearnRealtimePage() {
   }, []);
 
   const handleTranscript = (text: string) => {
+    if (!text.trim()) return;
+    
     setAiMessages((prev) => [...prev, { text, type: 'user' }]);
-    // AI javobini simulyatsiya qilish
+    
+    // AI javobini simulyatsiya qilish (backend ishlamasa)
     setTimeout(() => {
+      const letter = currentLetter || 'A';
+      const response = text.toLowerCase().includes(letter.toLowerCase())
+        ? `Ajoyib! Siz "${text}" dedingiz. Bu ${letter} harfi bilan boshlanadi!`
+        : `Yaxshi! Siz "${text}" dedingiz. Keling, ${letter} harfini takrorlaymiz.`;
+      
       setAiMessages((prev) => [
         ...prev,
         {
-          text: `Ajoyib! Siz "${text}" dedingiz. Bu ${currentLetter || 'A'} harfi bilan boshlanadi.`,
+          text: response,
           type: 'ai',
         },
       ]);
     }, 500);
+  };
+  
+  const handleNextLetter = () => {
+    const letters = ['A', 'O', 'L', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', 'Z', 'O\'', 'G\'', 'Sh', 'Ch', 'Ng'];
+    const currentIndex = letters.indexOf(currentLetter || 'A');
+    const nextIndex = (currentIndex + 1) % letters.length;
+    const nextLetter = letters[nextIndex];
+    
+    setCurrentLetter(nextLetter);
+    setExampleWords(getExampleWords(nextLetter));
+    setAiMessages((prev) => [
+      ...prev,
+      {
+        text: `Endi ${nextLetter} harfini o'rganamiz!`,
+        type: 'ai',
+      },
+    ]);
+  };
+  
+  const getExampleWords = (letter: string): string[] => {
+    const examples: Record<string, string[]> = {
+      'A': ['Anor', 'Olma', 'Archa'],
+      'O': ['Olma', 'O\'q', 'O\'t'],
+      'L': ['Lola', 'Limon', 'Lak'],
+      'B': ['Bola', 'Bosh', 'Bog\''],
+      'D': ['Daraxt', 'Dost', 'Dars'],
+    };
+    return examples[letter] || [`${letter} so'z 1`, `${letter} so'z 2`, `${letter} so'z 3`];
   };
 
   return (
@@ -73,7 +109,7 @@ export default function LearnRealtimePage() {
 
           {/* AI suhbat xabarlari */}
           {aiMessages.length > 0 && (
-            <div className="max-w-2xl mx-auto mb-8 space-y-2">
+            <div className="max-w-2xl mx-auto mb-8 space-y-2 max-h-64 overflow-y-auto">
               {aiMessages.map((msg, idx) => (
                 <div
                   key={idx}
@@ -88,6 +124,16 @@ export default function LearnRealtimePage() {
               ))}
             </div>
           )}
+
+          {/* Keyingi harf tugmasi */}
+          <div className="text-center">
+            <button
+              onClick={handleNextLetter}
+              className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-colors"
+            >
+              Keyingi harf →
+            </button>
+          </div>
         </div>
       )}
 
