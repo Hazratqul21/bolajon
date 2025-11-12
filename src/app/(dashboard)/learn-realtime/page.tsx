@@ -358,45 +358,53 @@ export default function LearnRealtimePage() {
     setExampleImages(images);
   };
   
-  // Harfni ovozli aytish (TTS)
+  // Harfni ovozli aytish (TTS) - Muxlisa API dan to'g'ri ovoz olish
   const speakLetter = async (letter: string) => {
     if (isSpeaking) return;
     setIsSpeaking(true);
     
     try {
-      // O'zbek tilida to'g'ri matn - harfni o'zi
-      const text = letter;
+      // Harfning fonetik matnini olish
+      const phoneticText = getUzbekPhoneticText(letter);
+      console.log('Muxlisa API ga yuborilayotgan harf:', letter, 'fonetik:', phoneticText);
       
-      // Avval Muxlisa API dan urinib ko'rish
-      const result = await textToSpeech(text, 'child_female');
+      // Muxlisa API dan urinib ko'rish
+      const result = await textToSpeech(phoneticText, 'child_female');
+      console.log('Muxlisa API javobi:', result);
       
+      let audio: HTMLAudioElement | null = null;
+      
+      // Muxlisa API dan kelgan audio ni ishlatish
       if (result.audio_url && result.audio_url !== 'web-speech-api') {
-        const audio = new Audio(result.audio_url);
-        audio.onended = () => setIsSpeaking(false);
-        audio.onerror = () => {
-          setIsSpeaking(false);
-          // Fallback ga o'tish
-          fallbackTTS(text);
-        };
-        await audio.play();
+        // Audio URL dan yuklash
+        audio = new Audio(result.audio_url);
+        console.log('Muxlisa audio URL ishlatilmoqda:', result.audio_url);
       } else if (result.audio_base64) {
         // Base64 audio
-        const audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
+        audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
+        console.log('Muxlisa base64 audio ishlatilmoqda');
+      }
+      
+      if (audio) {
+        // Muxlisa API dan kelgan audio ni ishlatish
         audio.onended = () => setIsSpeaking(false);
-        audio.onerror = () => {
+        audio.onerror = (err) => {
+          console.error('Muxlisa audio xatosi:', err);
           setIsSpeaking(false);
-          fallbackTTS(text);
+          // Fallback ga o'tish
+          fallbackTTS(letter);
         };
         await audio.play();
       } else {
-        // Fallback: Web Speech API
-        fallbackTTS(text);
+        // Muxlisa API ishlamasa, fallback
+        console.warn('Muxlisa API dan audio olinmadi, fallback ishlatilmoqda');
+        fallbackTTS(letter);
       }
     } catch (error) {
       console.warn('TTS error:', error);
       setIsSpeaking(false);
       // Fallback
-      fallbackTTS(`${letter} harfi`);
+      fallbackTTS(letter);
     }
   };
   
@@ -617,34 +625,45 @@ export default function LearnRealtimePage() {
     }
   };
   
-  // Misol so'zni ovozli aytish
+  // Misol so'zni ovozli aytish - Muxlisa API dan to'g'ri ovoz olish
   const speakWord = async (word: string) => {
     if (isSpeaking) return;
     setIsSpeaking(true);
     
     try {
-      // Muxlisa API dan urinib ko'rish
-      const result = await textToSpeech(word, 'child_female');
+      // So'zning fonetik matnini olish
+      const phoneticText = getUzbekPhoneticText(word);
+      console.log('Muxlisa API ga yuborilayotgan so\'z:', word, 'fonetik:', phoneticText);
       
+      // Muxlisa API dan urinib ko'rish
+      const result = await textToSpeech(phoneticText || word, 'child_female');
+      console.log('Muxlisa API javobi:', result);
+      
+      let audio: HTMLAudioElement | null = null;
+      
+      // Muxlisa API dan kelgan audio ni ishlatish
       if (result.audio_url && result.audio_url !== 'web-speech-api') {
-        const audio = new Audio(result.audio_url);
-        audio.onended = () => setIsSpeaking(false);
-        audio.onerror = () => {
-          setIsSpeaking(false);
-          fallbackTTS(word);
-        };
-        await audio.play();
+        // Audio URL dan yuklash
+        audio = new Audio(result.audio_url);
+        console.log('Muxlisa audio URL ishlatilmoqda:', result.audio_url);
       } else if (result.audio_base64) {
         // Base64 audio
-        const audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
+        audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
+        console.log('Muxlisa base64 audio ishlatilmoqda');
+      }
+      
+      if (audio) {
+        // Muxlisa API dan kelgan audio ni ishlatish
         audio.onended = () => setIsSpeaking(false);
-        audio.onerror = () => {
+        audio.onerror = (err) => {
+          console.error('Muxlisa audio xatosi:', err);
           setIsSpeaking(false);
           fallbackTTS(word);
         };
         await audio.play();
       } else {
-        // Fallback: Web Speech API
+        // Muxlisa API ishlamasa, fallback
+        console.warn('Muxlisa API dan audio olinmadi, fallback ishlatilmoqda');
         fallbackTTS(word);
       }
     } catch (error) {

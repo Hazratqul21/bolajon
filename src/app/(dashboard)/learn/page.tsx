@@ -182,49 +182,54 @@ export default function LearnPage() {
     }
   };
   
-  // Harfni o'qish - yozib olish va saqlash
+  // Harfni o'qish - Muxlisa API dan to'g'ri ovoz olish
   const handlePlayLetter = async () => {
     if (!currentLetter || isSpeakingLetter) return;
     
     setIsSpeakingLetter(true);
     
     try {
-      // Cache dan tekshirish
-      const cacheKey = currentLetter.letter;
-      if (letterAudioCacheRef.current.has(cacheKey)) {
-        const cachedAudio = letterAudioCacheRef.current.get(cacheKey)!;
-        cachedAudio.currentTime = 0;
-        cachedAudio.onended = () => setIsSpeakingLetter(false);
-        cachedAudio.onerror = () => setIsSpeakingLetter(false);
-        await cachedAudio.play();
-        return;
-      }
-      
-      // Muxlisa API dan olish - harfning nomidan foydalanish (to'g'ri talaffuz uchun)
+      // Har safar yangi ovoz olish - cache ni skip qilish (Muxlisa API dan to'g'ri ovoz olish uchun)
       const letterText = currentLetter.name || currentLetter.letter;
+      console.log('Muxlisa API ga yuborilayotgan matn:', letterText);
+      
+      // Muxlisa API dan olish
       const result = await textToSpeech(letterText, 'child_female');
+      console.log('Muxlisa API javobi:', result);
       
-      let audio: HTMLAudioElement;
+      let audio: HTMLAudioElement | null = null;
       
+      // Muxlisa API dan kelgan audio ni ishlatish
       if (result.audio_url && result.audio_url !== 'web-speech-api') {
+        // Audio URL dan yuklash
         audio = new Audio(result.audio_url);
+        console.log('Muxlisa audio URL ishlatilmoqda:', result.audio_url);
       } else if (result.audio_base64) {
+        // Base64 audio
         audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
-      } else {
-        // Fallback: Web Speech API with phonetic text (harfning nomidan foydalanish)
-        fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false), currentLetter.name);
-        return;
+        console.log('Muxlisa base64 audio ishlatilmoqda');
       }
       
-      // Audio ni cache ga saqlash
-      audio.onended = () => setIsSpeakingLetter(false);
-      audio.onerror = () => {
-        setIsSpeakingLetter(false);
-        // Fallback ga o'tish
+      if (audio) {
+        // Muxlisa API dan kelgan audio ni ishlatish
+        audio.onended = () => setIsSpeakingLetter(false);
+        audio.onerror = (err) => {
+          console.error('Muxlisa audio xatosi:', err);
+          setIsSpeakingLetter(false);
+          // Fallback ga o'tish
+          fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false), currentLetter.name);
+        };
+        
+        // Cache ga saqlash (keyinchalik tezroq ishlatish uchun)
+        const cacheKey = currentLetter.letter;
+        letterAudioCacheRef.current.set(cacheKey, audio);
+        
+        await audio.play();
+      } else {
+        // Muxlisa API ishlamasa, fallback
+        console.warn('Muxlisa API dan audio olinmadi, fallback ishlatilmoqda');
         fallbackTTS(currentLetter.letter, () => setIsSpeakingLetter(false), currentLetter.name);
-      };
-      letterAudioCacheRef.current.set(cacheKey, audio);
-      await audio.play();
+      }
     } catch (error) {
       console.error('Error playing letter audio:', error);
       setIsSpeakingLetter(false);
@@ -233,7 +238,7 @@ export default function LearnPage() {
     }
   };
   
-  // So'zni o'qish - yozib olish va saqlash
+  // So'zni o'qish - Muxlisa API dan to'g'ri ovoz olish
   const handlePlayAudio = async () => {
     if (!currentWord || isSpeakingWord) return;
 
@@ -241,56 +246,65 @@ export default function LearnPage() {
     setIsSpeakingWord(true);
     
     try {
-      // Cache dan tekshirish
-      const cacheKey = currentWord.word;
-      if (audioCacheRef.current.has(cacheKey)) {
-        const cachedAudio = audioCacheRef.current.get(cacheKey)!;
-        cachedAudio.currentTime = 0;
-        cachedAudio.onended = () => {
-          setIsPlayingAudio(false);
-          setIsSpeakingWord(false);
-        };
-        cachedAudio.onerror = () => {
-          setIsPlayingAudio(false);
-          setIsSpeakingWord(false);
-        };
-        await cachedAudio.play();
-        return;
-      }
+      // Har safar yangi ovoz olish - cache ni skip qilish (Muxlisa API dan to'g'ri ovoz olish uchun)
+      console.log('Muxlisa API ga yuborilayotgan so\'z:', currentWord.word);
       
       // Muxlisa API dan olish
       const result = await textToSpeech(currentWord.word, 'child_female');
+      console.log('Muxlisa API javobi:', result);
       
-      let audio: HTMLAudioElement;
+      let audio: HTMLAudioElement | null = null;
       
+      // Muxlisa API dan kelgan audio ni ishlatish
       if (result.audio_url && result.audio_url !== 'web-speech-api') {
+        // Audio URL dan yuklash
         audio = new Audio(result.audio_url);
+        console.log('Muxlisa audio URL ishlatilmoqda:', result.audio_url);
       } else if (result.audio_base64) {
+        // Base64 audio
         audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
+        console.log('Muxlisa base64 audio ishlatilmoqda');
+      }
+      
+      if (audio) {
+        // Muxlisa API dan kelgan audio ni ishlatish
+        audio.onended = () => {
+          setIsPlayingAudio(false);
+          setIsSpeakingWord(false);
+        };
+        audio.onerror = (err) => {
+          console.error('Muxlisa audio xatosi:', err);
+          setIsPlayingAudio(false);
+          setIsSpeakingWord(false);
+          // Fallback ga o'tish
+          fallbackTTS(currentWord.word, () => {
+            setIsPlayingAudio(false);
+            setIsSpeakingWord(false);
+          });
+        };
+        
+        // Cache ga saqlash (keyinchalik tezroq ishlatish uchun)
+        const cacheKey = currentWord.word;
+        audioCacheRef.current.set(cacheKey, audio);
+        
+        await audio.play();
       } else {
-        // Fallback: Web Speech API with phonetic text
+        // Muxlisa API ishlamasa, fallback
+        console.warn('Muxlisa API dan audio olinmadi, fallback ishlatilmoqda');
         fallbackTTS(currentWord.word, () => {
           setIsPlayingAudio(false);
           setIsSpeakingWord(false);
         });
-        return;
       }
-      
-      // Audio ni cache ga saqlash
-      audio.onended = () => {
-        setIsPlayingAudio(false);
-        setIsSpeakingWord(false);
-      };
-      audio.onerror = () => {
-        setIsPlayingAudio(false);
-        setIsSpeakingWord(false);
-      };
-      audioCacheRef.current.set(cacheKey, audio);
-      await audio.play();
     } catch (error) {
       console.error('Error playing audio:', error);
       setIsPlayingAudio(false);
       setIsSpeakingWord(false);
+      // Fallback ga o'tish
+      fallbackTTS(currentWord.word, () => {
+        setIsPlayingAudio(false);
+        setIsSpeakingWord(false);
+      });
     }
   };
 

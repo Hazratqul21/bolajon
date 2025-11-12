@@ -93,10 +93,34 @@ export async function textToSpeech(text: string, voice: string = 'child_female')
     const data = await response.json();
     // Muxlisa API javobini tekshirish
     console.log('Muxlisa TTS response:', data);
+    
+    // Muxlisa API response formatini tekshirish
+    // Ehtimol: { audio_url: "...", audio: "...", result: "..." } formatida
+    let audioUrl = data.audio_url || data.url || data.result?.audio_url;
+    let audioBase64 = data.audio_base64 || data.audio || data.result?.audio_base64;
+    
+    // Agar audio_url yoki audio_base64 bo'lmasa, boshqa formatlarni tekshirish
+    if (!audioUrl && !audioBase64) {
+      // Ehtimol, to'g'ridan-to'g'ri audio fayl qaytariladi
+      if (response.headers.get('content-type')?.includes('audio')) {
+        const audioBlob = await response.blob();
+        const reader = new FileReader();
+        return new Promise((resolve) => {
+          reader.onloadend = () => {
+            const base64 = reader.result as string;
+            resolve({
+              audio_base64: base64.split(',')[1], // data:audio/...;base64, ni olib tashlash
+            });
+          };
+          reader.readAsDataURL(audioBlob);
+        });
+      }
+    }
+    
     return {
-      audio_url: data.audio_url || data.url,
-      audio_base64: data.audio_base64 || data.audio,
-      text: data.text,
+      audio_url: audioUrl,
+      audio_base64: audioBase64,
+      text: data.text || text,
     };
   } catch (error) {
     console.warn('Muxlisa TTS error, using fallback:', error);
