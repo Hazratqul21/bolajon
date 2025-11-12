@@ -66,13 +66,40 @@ export default function LearnRealtimePage() {
       const letter = currentLetter || 'A';
       const textLower = text.toLowerCase().trim();
       const letterLower = letter.toLowerCase();
+      const exampleWords = getExampleWords(letter);
       
-      // Harfni to'g'ri talaffuz qilganini tekshirish
-      const response = textLower.startsWith(letterLower) || 
-                       textLower.includes(` ${letterLower}`) ||
-                       textLower === letterLower
-        ? `Ajoyib! Siz "${text}" dedingiz. Bu ${letter} harfi bilan boshlanadi!`
-        : `Yaxshi! Siz "${text}" dedingiz. Keling, ${letter} harfini takrorlaymiz.`;
+      // So'zni tekshirish - harfdan boshlanadigan so'z aytilganmi?
+      const words = textLower.split(/\s+/);
+      const startsWithLetter = words.some(word => {
+        // To'g'ridan-to'g'ri harf bilan boshlanish
+        if (word.startsWith(letterLower)) return true;
+        
+        // Maxsus harflar uchun (O', G', Sh, Ch, Ng)
+        if (letter === "O'" && word.startsWith("o'")) return true;
+        if (letter === "G'" && word.startsWith("g'")) return true;
+        if (letter === "Sh" && word.startsWith("sh")) return true;
+        if (letter === "Ch" && word.startsWith("ch")) return true;
+        if (letter === "Ng" && word.includes("ng")) return true;
+        
+        // Misol so'zlardan birini aytganmi?
+        return exampleWords.some(exWord => 
+          word.includes(exWord.toLowerCase())
+        );
+      });
+      
+      let response = '';
+      
+      if (startsWithLetter) {
+        // To'g'ri!
+        response = `Ajoyib! 🎉 Siz "${text}" dedingiz. Bu ${letter} harfi bilan boshlanadi!`;
+      } else {
+        // Noto'g'ri - qanday qilishni tushuntirish
+        const randomExample = exampleWords[Math.floor(Math.random() * exampleWords.length)];
+        response = `Hmm, "${text}" ${letter} harfi bilan boshlanmaydi. 😊\n\n` +
+                  `Keling, ${letter} harfini takrorlaymiz!\n\n` +
+                  `Misol: "${randomExample}" - bu ${letter} harfi bilan boshlanadi.\n\n` +
+                  `Yana bir bor gapiring: "${randomExample}"`;
+      }
       
       setAiMessages((prev) => {
         const newMessages = [...prev, { text: response, type: 'ai' as const }];
@@ -202,18 +229,24 @@ export default function LearnRealtimePage() {
 
           {/* Harf navigatsiya tugmalari */}
           <div className="text-center flex gap-4 justify-center items-center">
-            <button
-              onClick={handlePreviousLetter}
-              className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
-            >
-              ← Oldingi harf
-            </button>
-            <button
-              onClick={handleNextLetter}
-              className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
-            >
-              Keyingi harf →
-            </button>
+            {/* A harfida bo'lsa "Oldingi harf" tugmasini yashirish */}
+            {currentLetter !== 'A' && (
+              <button
+                onClick={handlePreviousLetter}
+                className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
+              >
+                ← Oldingi harf
+              </button>
+            )}
+            {/* Oxirgi harfda (Ng) bo'lsa "Keyingi harf" tugmasini yashirish */}
+            {currentLetter !== 'Ng' && (
+              <button
+                onClick={handleNextLetter}
+                className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
+              >
+                Keyingi harf →
+              </button>
+            )}
           </div>
         </div>
       )}
