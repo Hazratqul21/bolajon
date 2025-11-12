@@ -364,28 +364,61 @@ export default function LearnRealtimePage() {
     setIsSpeaking(true);
     
     try {
-      const text = `Bu ${letter} harfi`;
-      const result = await textToSpeech(text);
+      // O'zbek tilida to'g'ri matn
+      const text = `${letter} harfi`;
+      
+      // Avval Muxlisa API dan urinib ko'rish
+      const result = await textToSpeech(text, 'child_female');
       
       if (result.audio_url && result.audio_url !== 'web-speech-api') {
         const audio = new Audio(result.audio_url);
-        audio.play().catch(err => console.warn('Audio play error:', err));
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          // Fallback ga o'tish
+          fallbackTTS(text);
+        };
+        await audio.play();
+      } else if (result.audio_base64) {
+        // Base64 audio
+        const audio = new Audio(`data:audio/mpeg;base64,${result.audio_base64}`);
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          fallbackTTS(text);
+        };
+        await audio.play();
       } else {
         // Fallback: Web Speech API
-        if ('speechSynthesis' in window) {
-          const utterance = new SpeechSynthesisUtterance(text);
-          // O'zbek tili uchun to'g'ri lang code
-          utterance.lang = 'uz';
-          utterance.rate = 0.8;
-          utterance.pitch = 1.0;
-          utterance.volume = 1.0;
-          window.speechSynthesis.speak(utterance);
-        }
+        fallbackTTS(text);
       }
     } catch (error) {
       console.warn('TTS error:', error);
-    } finally {
-      setTimeout(() => setIsSpeaking(false), 2000);
+      setIsSpeaking(false);
+      // Fallback
+      fallbackTTS(`${letter} harfi`);
+    }
+  };
+  
+  // Fallback TTS funksiyasi
+  const fallbackTTS = (text: string) => {
+    if ('speechSynthesis' in window) {
+      // Avval barcha ovozlarni to'xtatish
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      // O'zbek tili uchun turli variantlarni sinab ko'rish
+      utterance.lang = 'ru-RU'; // O'zbek uchun eng yaqin variant
+      utterance.rate = 0.7;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      window.speechSynthesis.speak(utterance);
+    } else {
+      setIsSpeaking(false);
     }
   };
   
@@ -596,16 +629,18 @@ export default function LearnRealtimePage() {
                   <CardContent className="p-4">
                     <div className="text-2xl font-bold mb-2">{word}</div>
                     {exampleImages[idx] ? (
-                      <img
-                        src={exampleImages[idx]}
-                        alt={word}
-                        className="w-full h-32 object-cover rounded"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://via.placeholder.com/300x200?text=${word}`;
-                        }}
-                      />
+                      <div className="w-full h-48 rounded-lg overflow-hidden mb-2 bg-gray-100 flex items-center justify-center">
+                        <img
+                          src={exampleImages[idx]}
+                          alt={word}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `https://via.placeholder.com/300x200/3b82f6/ffffff?text=${encodeURIComponent(word)}`;
+                          }}
+                        />
+                      </div>
                     ) : (
-                      <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded flex items-center justify-center">
+                      <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center mb-2">
                         <span className="text-4xl">📷</span>
                       </div>
                     )}
