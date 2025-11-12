@@ -9,6 +9,23 @@ export default function LearnRealtimePage() {
   const [aiMessages, setAiMessages] = useState<Array<{ text: string; type: 'ai' | 'user' }>>([]);
   const [exampleWords, setExampleWords] = useState<string[]>([]);
   const [exampleImages, setExampleImages] = useState<string[]>([]);
+  const [childName, setChildName] = useState<string>('');
+
+  useEffect(() => {
+    // localStorage dan ma'lumotlarni olish
+    const name = localStorage.getItem('bolajon_child_name') || 'Bola';
+    setChildName(name);
+    
+    // Boshlang'ich AI xabari
+    setAiMessages([
+      {
+        text: `Salom ${name}! Men sizga harflarni o'rgatishga yordam beraman. Keling, boshlaymiz!`,
+        type: 'ai',
+      },
+    ]);
+    setCurrentLetter('A');
+    setExampleWords(['Anor', 'Olma', 'Archa']);
+  }, []);
 
   const handleTranscript = (text: string) => {
     setAiMessages((prev) => [...prev, { text, type: 'user' }]);

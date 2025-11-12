@@ -11,9 +11,38 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const router = useRouter();
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const handleOnboardingComplete = async (data: { firstName: string; age: number; preferences?: any }) => {
-    // Backend ga child onboarding request yuborish
+    setIsLoading(true);
+    setError(null);
+
     try {
+      // Avval guardian yaratish yoki olish
+      let guardianId = '00000000-0000-0000-0000-000000000000';
+      
+      // Guardian yaratish (temporary)
+      try {
+        const guardianResponse = await fetch('http://localhost:8000/api/auth/guardian/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: `temp-${Date.now()}@bolajon.local`,
+            first_name: 'Temp Guardian',
+            phone: null,
+          }),
+        });
+
+        if (guardianResponse.ok) {
+          const guardianResult = await guardianResponse.json();
+          guardianId = guardianResult.guardian_id;
+        }
+      } catch (guardianError) {
+        console.warn('Guardian yaratishda xatolik, default ID ishlatilmoqda:', guardianError);
+      }
+
+      // Child onboarding
       const response = await fetch('http://localhost:8000/api/auth/child/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -21,25 +50,56 @@ export default function Home() {
           first_name: data.firstName,
           nickname: data.firstName,
           age: data.age,
-          guardian_id: '00000000-0000-0000-0000-000000000000', // Temporary, keyinchalik guardian auth qo'shiladi
-          preferences: data.preferences,
+          guardian_id: guardianId,
+          preferences: data.preferences || {},
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
+        // Ma'lumotlarni localStorage ga saqlash
+        localStorage.setItem('bolajon_child_id', result.child_id);
+        localStorage.setItem('bolajon_child_name', data.firstName);
+        localStorage.setItem('bolajon_child_age', String(data.age));
+        
         // Real-time learn page ga o'tish
         router.push('/learn-realtime');
+      } else {
+        const errorData = await response.json().catch(() => ({ detail: 'Server xatosi' }));
+        setError(errorData.detail || 'Xatolik yuz berdi');
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Onboarding error:', error);
+      // Backend ishlamasa ham, to'g'ridan-to'g'ri learn page ga o'tish
+      setError('Backend ulanmadi. Demo rejimda davom etamiz...');
+      localStorage.setItem('bolajon_child_name', data.firstName);
+      localStorage.setItem('bolajon_child_age', String(data.age));
+      
+      setTimeout(() => {
+        router.push('/learn-realtime');
+      }, 1500);
     }
   };
 
   return (
     <>
       {showOnboarding ? (
-        <OnboardingForm onComplete={handleOnboardingComplete} />
+        <>
+          <OnboardingForm onComplete={handleOnboardingComplete} />
+          {isLoading && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg">
+                <p className="text-lg">Yuklanmoqda...</p>
+              </div>
+            </div>
+          )}
+          {error && (
+            <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded z-50">
+              {error}
+            </div>
+          )}
+        </>
       ) : (
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-12">

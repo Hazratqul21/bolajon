@@ -14,10 +14,14 @@ export function OnboardingForm({ onComplete }: OnboardingFormProps) {
   const [age, setAge] = useState<number | ''>('');
   const [preferences, setPreferences] = useState<any>({});
 
-  const handleNext = () => {
+  const handleNext = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    
     if (step === 1 && firstName && age) {
       setStep(2);
     } else if (step === 2) {
+      console.log('Onboarding complete:', { firstName, age, preferences });
       onComplete({ firstName, age: Number(age), preferences });
     }
   };
@@ -88,9 +92,10 @@ export function OnboardingForm({ onComplete }: OnboardingFormProps) {
 
           <Button
             onClick={handleNext}
-            disabled={step === 1 && (!firstName || !age)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            disabled={(step === 1 && (!firstName || !age)) || (step === 2 && false)}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             size="lg"
+            type="button"
           >
             {step === 1 ? 'Keyingi' : 'Boshlash'}
           </Button>
