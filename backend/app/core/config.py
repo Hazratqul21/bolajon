@@ -13,7 +13,7 @@ class Settings(BaseSettings):
   database_url: str = "postgresql+asyncpg://bolajon:bolajon@postgres:5432/bolajon"
   openai_api_key: str = ""
   openai_model: str = "gpt-4o-mini"
-  muxlisa_api_url: AnyHttpUrl | str = "https://muxlisa.uz/api"
+  muxlisa_api_url: AnyHttpUrl | str = "https://service.muxlisa.uz/api"
   muxlisa_api_key: str = ""
   redis_url: str | None = None
   admin_api_token: str | None = None

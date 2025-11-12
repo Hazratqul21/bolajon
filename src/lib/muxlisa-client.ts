@@ -4,7 +4,7 @@
  * Documentation: https://muxlisa.uz
  */
 
-const MUXLISA_API_URL = process.env.NEXT_PUBLIC_MUXLISA_API_URL || 'https://muxlisa.uz/api';
+const MUXLISA_API_URL = process.env.NEXT_PUBLIC_MUXLISA_API_URL || 'https://service.muxlisa.uz/api';
 const MUXLISA_API_KEY = process.env.NEXT_PUBLIC_MUXLISA_API_KEY;
 
 export interface STTResponse {
@@ -31,13 +31,12 @@ export async function speechToText(audioBlob: Blob): Promise<STTResponse> {
 
   const formData = new FormData();
   formData.append('audio', audioBlob, 'audio.webm');
-  formData.append('language', 'uz');
 
   try {
-    const response = await fetch(`${MUXLISA_API_URL}/v1/stt/transcribe`, {
+    const response = await fetch(`${MUXLISA_API_URL}/v2/stt`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${MUXLISA_API_KEY}`,
+        'x-api-key': MUXLISA_API_KEY,
       },
       body: formData,
     });
@@ -70,10 +69,10 @@ export async function textToSpeech(text: string, voice: string = 'child_female')
   }
 
   try {
-    const response = await fetch(`${MUXLISA_API_URL}/v1/tts/synthesize`, {
+    const response = await fetch(`${MUXLISA_API_URL}/v2/tts`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${MUXLISA_API_KEY}`,
+        'x-api-key': MUXLISA_API_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
