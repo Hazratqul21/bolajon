@@ -200,8 +200,9 @@ export default function LearnPage() {
         return;
       }
       
-      // Muxlisa API dan olish
-      const result = await textToSpeech(currentLetter.letter, 'child_female');
+      // Muxlisa API dan olish - harfning nomidan foydalanish (to'g'ri talaffuz uchun)
+      const letterText = currentLetter.name || currentLetter.letter;
+      const result = await textToSpeech(letterText, 'child_female');
       
       let audio: HTMLAudioElement;
       
