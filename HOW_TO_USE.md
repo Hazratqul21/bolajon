@@ -10,7 +10,30 @@
 
 ---
 
-## 🔧 Birinchi marta sozlash
+## ⚡ Tezkor Ishga Tushirish (Avtomatik)
+
+```bash
+# Barcha narsani avtomatik ishga tushirish
+./start.sh
+```
+
+Bu skript:
+- ✅ PostgreSQL ni tekshiradi va ishga tushadi
+- ✅ Database ni sozlaydi
+- ✅ Backend ni sozlaydi va ishga tushadi
+- ✅ Frontend ni sozlaydi va ishga tushadi
+- ✅ Barcha process larni boshqaradi
+
+**To'xtatish:**
+```bash
+./stop.sh
+```
+
+Yoki `Ctrl+C` bosing.
+
+---
+
+## 🔧 Birinchi marta sozlash (Qo'lda)
 
 ### 1. Database sozlash
 
