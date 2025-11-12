@@ -28,6 +28,7 @@ cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 alembic upgrade head
+python -m backend.scripts.seed  # mavjud darslar 100 000 tagacha to‘ldiriladi
 uvicorn app.main:app --reload
 ```
 
@@ -42,6 +43,7 @@ npm run dev
 
 - `docs/requirements.md` – asosiy funksional talablar
 - `docs/architecture.md` – komponentlar va oqimlar sxemasi
+- `docs/customization-guide.md` – backend/frontendni qo‘lda sozlash bo‘yicha qo‘llanma
 - `backend/alembic/` – migratsiyalar
 - `backend/app/db/seed.py` – boshlang‘ich kontent (harflar, matematika)
 

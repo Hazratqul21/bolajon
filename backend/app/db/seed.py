@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import logger
@@ -125,6 +125,8 @@ async def seed_initial_data(session: AsyncSession) -> None:
     lesson = await _get_or_create_lesson(session, alphabet_module, lesson_data, order_index=index)
     await _ensure_prompts(session, lesson, ALPHABET_PROMPTS)
 
+  await _ensure_minimum_lessons(session, alphabet_module, minimum_count=100_000)
+
   math_path = await _get_or_create_learning_path(session, "math", "Matematika")
   math_module = await _get_or_create_module(session, math_path, "math-foundations", "Qo'shish va ayirish")
   await _ensure_math_skill(session, math_path, math_module)
@@ -223,6 +225,47 @@ async def _ensure_prompts(session: AsyncSession, lesson: Lesson, prompts: list[d
               locale=prompt["locale"],
           )
       )
+
+
+async def _ensure_minimum_lessons(session: AsyncSession, module: Module, *, minimum_count: int) -> None:
+  current_count = await session.scalar(
+      select(func.count()).select_from(Lesson).where(Lesson.module_id == module.id),
+  )
+  if current_count is None:
+    current_count = 0
+  if current_count >= minimum_count:
+    logger.info("Lesson count already %s (>= %s); skipping generation.", current_count, minimum_count)
+    return
+
+  logger.info(
+      "Generating %s additional lessons for module %s to reach %s.",
+      minimum_count - current_count,
+      module.key,
+      minimum_count,
+  )
+  for offset in range(minimum_count - current_count):
+    absolute_index = current_count + offset
+    key = f"auto-lesson-{absolute_index:05d}"
+    lesson = Lesson(
+        module_id=module.id,
+        key=key,
+        title=f"Avto dars #{absolute_index + 1}",
+        description="Avtomatik generatsiya qilingan mashg'ulot.",
+        lesson_type="letter_practice",
+        target_letter=None,
+        target_sound=None,
+        difficulty="beginner",
+        order_index=absolute_index,
+        xp_reward=5,
+        media_assets={"generated": True},
+        example_words=[f"So'z {absolute_index + 1}"],
+        example_image_urls=[],
+        extra_metadata={"generated": True},
+    )
+    session.add(lesson)
+    if offset % 1000 == 0:
+      await session.flush()
+  logger.info("Bulk lesson generation completed.")
 
 
 async def _ensure_math_skill(session: AsyncSession, learning_path: LearningPath, module: Module) -> None:
