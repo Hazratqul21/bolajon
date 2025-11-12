@@ -93,7 +93,7 @@ class GamificationEngine:
     progress.xp_earned += xp_awarded
     progress.streak_count = user.current_streak
     progress.last_attempt_at = datetime.utcnow()
-    progress.metadata |= {
+    progress.meta_data |= {
         "last_score": attempt.score,
         "is_correct": attempt.is_correct,
     }

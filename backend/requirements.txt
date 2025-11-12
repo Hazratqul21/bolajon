@@ -12,4 +12,5 @@ python-multipart==0.0.9
 loguru==0.7.2
 tenacity==8.2.3
 orjson==3.10.7
+greenlet>=3.0.0
 

@@ -114,7 +114,7 @@ async def _sync_prompts(session: AsyncSession, lesson: Lesson, prompts: list[dic
     if prompt:
       prompt.template = template
       prompt.locale = locale
-      prompt.metadata = metadata
+      prompt.meta_data = metadata
       session.add(prompt)
     else:
       session.add(
@@ -123,7 +123,7 @@ async def _sync_prompts(session: AsyncSession, lesson: Lesson, prompts: list[dic
               prompt_type=prompt_type,
               template=template,
               locale=locale,
-              metadata=metadata,
+              meta_data=metadata,
           )
       )
 

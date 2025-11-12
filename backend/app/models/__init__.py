@@ -65,7 +65,7 @@ class Module(TimestampMixin, Base):
   description: Mapped[str | None] = mapped_column(Text)
   module_type: Mapped[str] = mapped_column(SkillType, default="alphabet")
   order_index: Mapped[int] = mapped_column(Integer, default=0)
-  metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+  meta_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, name="metadata")
   is_unlocked_by_default: Mapped[bool] = mapped_column(Boolean, default=False)
 
   learning_path: Mapped["LearningPath"] = relationship(back_populates="modules")
@@ -105,7 +105,7 @@ class LessonPrompt(TimestampMixin, Base):
   prompt_type: Mapped[str] = mapped_column(PromptType, default="evaluation")
   locale: Mapped[str] = mapped_column(String(16), default="uz-Latn")
   template: Mapped[str] = mapped_column(Text)
-  metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+  meta_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, name="metadata")
 
   lesson: Mapped["Lesson"] = relationship(back_populates="prompts")
 
@@ -132,7 +132,7 @@ class SkillActivity(TimestampMixin, Base):
   instructions: Mapped[str] = mapped_column(Text)
   content: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
   xp_reward: Mapped[int] = mapped_column(Integer, default=15)
-  metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+  meta_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, name="metadata")
 
   skill: Mapped["Skill"] = relationship(back_populates="activities")
 
@@ -168,7 +168,7 @@ class UserProgress(TimestampMixin, Base):
   xp_earned: Mapped[int] = mapped_column(Integer, default=0)
   streak_count: Mapped[int] = mapped_column(Integer, default=0)
   last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-  metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+  meta_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, name="metadata")
 
   user: Mapped["User"] = relationship(back_populates="progress_entries")
   learning_path: Mapped["LearningPath"] = relationship()
@@ -196,7 +196,7 @@ class UserAchievement(TimestampMixin, Base):
   user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
   achievement_id: Mapped[UUID] = mapped_column(ForeignKey("achievements.id", ondelete="CASCADE"))
   awarded_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
-  metadata: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+  meta_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, name="metadata")
 
   user: Mapped["User"] = relationship(back_populates="achievements")
   achievement: Mapped["Achievement"] = relationship(back_populates="user_achievements")
