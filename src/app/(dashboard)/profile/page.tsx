@@ -52,13 +52,13 @@ export default function ProfilePage() {
               <p className="text-gray-600">Yosh: {user.age}</p>
             </div>
             <div className="flex items-center gap-4">
-              <LevelBadge level={user.currentLevel} />
-              <StarsDisplay stars={user.totalStars} size="md" />
+              <LevelBadge level={user.currentLevel || 1} />
+              <StarsDisplay stars={user.totalStars || 0} size="md" />
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-600 mb-2">Umumiy ball</p>
-                <p className="text-2xl font-bold">{user.totalScore}</p>
+                <p className="text-sm text-gray-600 mb-2">Yulduzlar</p>
+                <p className="text-2xl font-bold">{user.totalStars || 0}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-2">Yakunlangan harflar</p>

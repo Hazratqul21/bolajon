@@ -423,7 +423,7 @@ export default function LearnPage() {
         {user && (
           <div className="text-center mt-8">
             <p className="text-gray-600 mb-2">Sizning yulduzlaringiz:</p>
-            <StarsDisplay stars={user.totalStars} size="lg" />
+            <StarsDisplay stars={user.totalStars || 0} size="lg" />
           </div>
         )}
       </div>
