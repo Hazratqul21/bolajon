@@ -21,7 +21,7 @@ export default function LearnRealtimePage() {
   const allLetters = ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', 'Z', 'O\'', 'G\'', 'Sh', 'Ch', 'Ng'];
 
   // Helper functions - must be declared before useEffect
-  const shuffle = <T>(array: T[]): T[] => {
+  const shuffle = <T,>(array: T[]): T[] => {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -1276,17 +1276,6 @@ export default function LearnRealtimePage() {
       'Ng': ['Ming', 'Qo\'ng\'iroq', 'Qo\'ng\'iz'],
     };
   };
-
-  // Random shuffle funksiyasi (Fisher-Yates algoritmi)
-  const shuffle = <T>(array: T[]): T[] => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
-
 
   // OpenAI "miya" orqali qiziqishlarga mos random so'zlarni generatsiya qilish
   const getExampleWords = async (letter: string): Promise<string[]> => {
