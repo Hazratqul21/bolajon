@@ -30,6 +30,13 @@ export default function LearnRealtimePage() {
     return shuffled;
   };
 
+  // Forward declarations - these will be defined later but we need them in useEffect
+  // Using function type instead of let to avoid "used before assigned" errors
+  let getWordsByInterest: (() => Record<string, Record<string, string[]>>) | undefined;
+  let getDefaultWords: (() => Record<string, string[]>) | undefined;
+  let getExampleWordsSync: ((letter: string) => string[]) | undefined;
+  let getExampleWords: ((letter: string) => Promise<string[]>) | undefined;
+
   useEffect(() => {
     // localStorage dan ma'lumotlarni olish
     const name = localStorage.getItem('bolajon_child_name') || 'Bola';
@@ -68,16 +75,32 @@ export default function LearnRealtimePage() {
       speakAiMessage(initialMessage);
     }, 1000);
     // OpenAI "miya" orqali so'zlarni generatsiya qilish
+    // Note: getExampleWords and getExampleWordsSync are defined later in the file
+    // They will be available when this useEffect runs
     (async () => {
       try {
-        const words = await getExampleWords('A');
-        setExampleWords(words);
-        loadImagesForWords(words);
+        if (getExampleWords) {
+          const words = await getExampleWords('A');
+          setExampleWords(words);
+          loadImagesForWords(words);
+        } else {
+          // Fallback if function not yet defined
+          const words = ['Anor', 'Archa', 'Avtobus'];
+          setExampleWords(words);
+          loadImagesForWords(words);
+        }
       } catch (error) {
         console.error('Error generating words:', error);
-        const words = getExampleWordsSync('A');
-        setExampleWords(words);
-        loadImagesForWords(words);
+        if (getExampleWordsSync) {
+          const words = getExampleWordsSync('A');
+          setExampleWords(words);
+          loadImagesForWords(words);
+        } else {
+          // Fallback if function not yet defined
+          const words = ['Anor', 'Archa', 'Avtobus'];
+          setExampleWords(words);
+          loadImagesForWords(words);
+        }
       }
     })();
   }, []);
@@ -116,14 +139,18 @@ export default function LearnRealtimePage() {
         // OpenAI "miya" orqali so'zlarni generatsiya qilish
         (async () => {
           try {
-            const words = await getExampleWords(prevLetter);
-            setExampleWords(words);
-            loadImagesForWords(words);
+            if (getExampleWords) {
+              const words = await getExampleWords(prevLetter);
+              setExampleWords(words);
+              loadImagesForWords(words);
+            }
           } catch (error) {
             console.error('Error generating words:', error);
-            const words = getExampleWordsSync(prevLetter);
-            setExampleWords(words);
-            loadImagesForWords(words);
+            if (getExampleWordsSync) {
+              const words = getExampleWordsSync(prevLetter);
+              setExampleWords(words);
+              loadImagesForWords(words);
+            }
           }
         })();
       } else if (e.key === 'ArrowRight' && currentLetter !== 'Ng') {
@@ -155,14 +182,18 @@ export default function LearnRealtimePage() {
         // OpenAI "miya" orqali so'zlarni generatsiya qilish
         (async () => {
           try {
-            const words = await getExampleWords(nextLetter);
-            setExampleWords(words);
-            loadImagesForWords(words);
+            if (getExampleWords) {
+              const words = await getExampleWords(nextLetter);
+              setExampleWords(words);
+              loadImagesForWords(words);
+            }
           } catch (error) {
             console.error('Error generating words:', error);
-            const words = getExampleWordsSync(nextLetter);
-            setExampleWords(words);
-            loadImagesForWords(words);
+            if (getExampleWordsSync) {
+              const words = getExampleWordsSync(nextLetter);
+              setExampleWords(words);
+              loadImagesForWords(words);
+            }
           }
         })();
       } else if (e.key === 'Escape') {
@@ -351,28 +382,40 @@ export default function LearnRealtimePage() {
       let exampleWords: string[] = [];
       try {
         console.log('🤖 AI: getExampleWords chaqirilmoqda...');
-        exampleWords = await getExampleWords(letter);
-        console.log('🤖 AI: getExampleWords natijasi:', exampleWords);
+        if (getExampleWords) {
+          exampleWords = await getExampleWords(letter);
+          console.log('🤖 AI: getExampleWords natijasi:', exampleWords);
+        }
         if (exampleWords && exampleWords.length > 0) {
           setExampleWords(exampleWords);
         } else {
           console.warn('🤖 AI: exampleWords bo\'sh, sync versiyani ishlatamiz');
-          exampleWords = getExampleWordsSync(letter);
-          setExampleWords(exampleWords);
+          if (getExampleWordsSync) {
+            exampleWords = getExampleWordsSync(letter);
+            setExampleWords(exampleWords);
+          }
         }
       } catch (error) {
         console.error('🤖 AI: getExampleWords error:', error);
-        exampleWords = getExampleWordsSync(letter);
-        console.log('🤖 AI: Sync versiya natijasi:', exampleWords);
-        setExampleWords(exampleWords);
+        if (getExampleWordsSync) {
+          exampleWords = getExampleWordsSync(letter);
+          console.log('🤖 AI: Sync versiya natijasi:', exampleWords);
+          setExampleWords(exampleWords);
+        }
       }
       
       // Agar exampleWords hali ham bo'sh bo'lsa, default so'zlarni ishlatish
       if (!exampleWords || exampleWords.length === 0) {
         console.warn('🤖 AI: exampleWords hali ham bo\'sh, default so\'zlarni ishlatamiz');
-        const defaultWords = getDefaultWords();
-        exampleWords = defaultWords[letter] || ['Anor', 'Archa', 'Avtobus'];
-        setExampleWords(exampleWords);
+        if (getDefaultWords) {
+          const defaultWords = getDefaultWords();
+          exampleWords = defaultWords[letter] || ['Anor', 'Archa', 'Avtobus'];
+          setExampleWords(exampleWords);
+        } else {
+          // Ultimate fallback
+          exampleWords = ['Anor', 'Archa', 'Avtobus'];
+          setExampleWords(exampleWords);
+        }
       }
       
       console.log('🤖 AI: Ishlatiladigan so\'zlar:', exampleWords);
@@ -546,17 +589,21 @@ export default function LearnRealtimePage() {
     // OpenAI "miya" orqali qiziqishlarga mos random so'zlarni generatsiya qilish
     try {
       console.log('🔄 Starting word generation for letter:', letter);
-      const words = await getExampleWords(letter);
-      console.log('✅ Words generated:', words);
-      setExampleWords(words);
-      loadImagesForWords(words);
+      if (getExampleWords) {
+        const words = await getExampleWords(letter);
+        console.log('✅ Words generated:', words);
+        setExampleWords(words);
+        loadImagesForWords(words);
+      }
     } catch (error) {
       console.error('❌ Error generating words:', error);
       // Fallback: synchronous version
-      const words = getExampleWordsSync(letter);
-      console.log('🔄 Using fallback words:', words);
-      setExampleWords(words);
-      loadImagesForWords(words);
+      if (getExampleWordsSync) {
+        const words = getExampleWordsSync(letter);
+        console.log('🔄 Using fallback words:', words);
+        setExampleWords(words);
+        loadImagesForWords(words);
+      }
     }
   };
   
@@ -1036,7 +1083,7 @@ export default function LearnRealtimePage() {
   
   // Qiziqishlarga mos so'zlar bazasi
     // Qiziqishlarga mos so'zlar bazasi - har bir harf uchun 100 ta so'z
-  const getWordsByInterest = (): Record<string, Record<string, string[]>> => {
+  getWordsByInterest = (): Record<string, Record<string, string[]>> => {
     // Har bir harf uchun 100 ta so'z yaratish funksiyasi
     const generate100Words = (baseWords: string[]): string[] => {
       if (baseWords.length === 0) return [];
@@ -1243,7 +1290,7 @@ export default function LearnRealtimePage() {
     };
   };
 
-  const getDefaultWords = (): Record<string, string[]> => {
+  getDefaultWords = (): Record<string, string[]> => {
     return {
       'A': ['Anor', 'Archa', 'Avtobus'],
       'O': ['Olma', 'O\'q', 'O\'t'],
@@ -1278,7 +1325,7 @@ export default function LearnRealtimePage() {
   };
 
   // OpenAI "miya" orqali qiziqishlarga mos random so'zlarni generatsiya qilish
-  const getExampleWords = async (letter: string): Promise<string[]> => {
+  getExampleWords = async (letter: string): Promise<string[]> => {
     // Preferences'ni localStorage'dan olish
     const preferencesStr = localStorage.getItem('bolajon_child_preferences');
     let preferences: string[] = [];
@@ -1366,25 +1413,29 @@ export default function LearnRealtimePage() {
     }
     
     // Preferences bo'lmasa yoki mos so'zlar topilmasa, default so'zlarni random qilish
-    const defaultWords = getDefaultWords();
-    const wordsForLetter = defaultWords[letter] || ['So\'z 1', 'So\'z 2', 'So\'z 3'];
-    // Random shuffle funksiyasi (Fisher-Yates algoritmi)
-    const shuffleLocal = <T>(array: T[]): T[] => {
-      const shuffled = [...array];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      return shuffled;
-    };
-    const shuffled = shuffleLocal(wordsForLetter);
-    return shuffled.slice(0, 3);
+    if (getDefaultWords) {
+      const defaultWords = getDefaultWords();
+      const wordsForLetter = defaultWords[letter] || ['So\'z 1', 'So\'z 2', 'So\'z 3'];
+      // Random shuffle funksiyasi (Fisher-Yates algoritmi)
+      const shuffleLocal = <T,>(array: T[]): T[] => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      };
+      const shuffled = shuffleLocal(wordsForLetter);
+      return shuffled.slice(0, 3);
+    }
+    // Ultimate fallback
+    return ['Anor', 'Archa', 'Avtobus'];
   };
 
 
 
   // Synchronous version (fallback)
-  const getExampleWordsSync = (letter: string): string[] => {
+  getExampleWordsSync = (letter: string): string[] => {
     const preferencesStr = localStorage.getItem('bolajon_child_preferences');
     console.log('🔍 Sync: Raw preferences from localStorage:', preferencesStr);
     let preferences: string[] = [];
@@ -1496,8 +1547,11 @@ export default function LearnRealtimePage() {
                   }`}
                   title={(() => {
                     try {
-                      const words = getExampleWordsSync(letter);
-                      return words && words.length > 0 ? words[0] : letter;
+                      if (getExampleWordsSync) {
+                        const words = getExampleWordsSync(letter);
+                        return words && words.length > 0 ? words[0] : letter;
+                      }
+                      return letter;
                     } catch {
                       return letter;
                     }
