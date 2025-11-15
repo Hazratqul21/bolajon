@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: bolajon-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port 10000
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bolajon-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: MUXLISA_API_KEY
+        sync: false
+      - key: MUXLISA_API_URL
+        value: https://muxlisa.uz/api
+      - key: ADMIN_API_TOKEN
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://bolajon-frontend.onrender.com
+
+databases:
+  - name: bolajon-db
+    plan: free
+
+

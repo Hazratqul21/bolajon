@@ -2,6 +2,11 @@
 node_modules/
 .pnp
 .pnp.js
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
 # Testing
 coverage/
@@ -29,6 +34,7 @@ dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
 # IDE
 .vscode/
@@ -40,6 +46,7 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+*.pem
 
 # Python
 __pycache__/
@@ -60,3 +67,12 @@ ENV/
 # Docker
 .dockerignore
 
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma
+/lib/generated/prisma
